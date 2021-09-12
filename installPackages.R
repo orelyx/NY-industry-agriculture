@@ -16,6 +16,7 @@ requiredPackages <- c(
     "git2r",
     "R6",
     "glue",
+    "tinytex",
     "latex2exp",
     "ltxsparklines")
 
