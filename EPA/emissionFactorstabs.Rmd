@@ -1,0 +1,124 @@
+```{r }
+# title: "emissionFactorstabs.Rmd"
+# author: "Eric Koski"
+# date: "12/18/2019"
+#     Copyright (c) 2021 Orebed Analytics LLC under MIT License; see LICENSE.md. 
+# 
+#     Data files produced by this software are licensed under a Creative Commons 
+#     Attribution 4.0 International License; see
+#     https://creativecommons.org/licenses/by/4.0/. 
+
+subscriptGHGs <- function(names) {
+  stri_replace_all_fixed(names, 
+                         c("CO2",   "CH4",   "N2O"),
+                         c("CO$_2$", # ₂ - \U2082
+                           "CH$_4$", # ₄ - \U2084
+                           "N$_2$O"),# ₂ - \U2082
+                         vectorize_all = FALSE)
+}
+
+renderEmissionFactorTable <- function(df, 
+                                      caption, 
+                                      options,
+                                      sep = c("")) # default groups of 5
+  {
+  kable(df, 
+        caption = caption,
+        format = "latex", 
+        align = "lrrrrrrr",
+        linesep = sep,
+        col.names = subscriptGHGs(names(df)),
+        booktabs = TRUE, escape = FALSE) %>%
+    kable_styling(font_size = 9,
+                  latex_options = options,
+                  stripe_color = honeydew) %>%  # if we have stripes at all
+    column_spec(1, width = "11em") %>%
+    column_spec(2, width = "7em") %>%
+    column_spec(3, width = "6em") %>%
+    column_spec(4, width = "6em") %>%
+    column_spec(5, width = "6em") %>%
+    column_spec(6, width = "6em") %>%
+    column_spec(7, width = "6em") %>%
+    column_spec(8, width = "6em") 
+}
+
+
+renderEmissionFactorTable(
+  EmissionFactorsLiquidFuels,
+  tableCaption("Emission factors, liquid fuels", "-liquid"),
+  options = c("scale_down", "hold_position"),
+  c("", "", "", "", "\\addlinespace"))
+
+renderEmissionFactorTable(
+  EmissionFactorsSolidFuels,
+  tableCaption("Emission factors, solid fuels", "-solid"),
+  options = c("scale_down", "hold_position", "striped"))
+
+renderEmissionFactorTable(
+  EmissionFactorsGaseousFuels,
+  tableCaption("Emission factors, gaseous fuels", "-gaseous"),
+  options = c("scale_down", "hold_position"),
+  c("\\addlinespace[2pt]"))
+
+names(EmissionFactorsGridElectricity)[c(3,4,6,7)] <- 
+  names(EmissionFactorsGridElectricity)[c(3,4,6,7)] %>%
+  stri_replace_all_fixed("kg / MWh", "g / MWh")
+
+EmissionFactorsGridElectricity %>%
+  mutate_at(vars(c(3, 4, 6, 7)), 
+            .funs = ~.x * 1000) %>%
+  mutate_at(vars(c(2:7)), 
+            .funs = function(x) (formatC(x, digits = 2, format = "f"))) %>%
+  kable(
+    col.names = 
+      subscriptGHGs(
+        stri_replace_all_fixed(
+          names(EmissionFactorsGridElectricity), 
+          c("Total Output ", "Non-Baseload "),
+          c("",             ""), 
+          vectorize_all = FALSE)),
+    caption = tableCaption("Emission factors, grid electricity", "-electricity"),
+        format = "latex", 
+        align = "lrrrrrr", 
+        booktabs = TRUE, escape = FALSE,
+        linesep = c("")) %>%
+    add_header_above(c(" " = 1, "Total Output" = 3, "Non-Baseload" = 3)) %>%
+    kable_styling(bootstrap_options = c("hover", "condensed"),
+                  position = "center",
+                  font_size = 9,
+                  latex_options = c("scale_down", "hold_position")) %>%
+  row_spec(length(EmissionFactorsGridElectricity[[1]]) - 1,
+           hline_after = TRUE) %>%
+  row_spec(which(EmissionFactorsGridElectricity[["eGRID Subregion"]] == 
+                   "NYUP (NPCC Upstate NY)"),
+           background = honeydew) %>%
+    column_spec(1, width = "15em") %>%
+    column_spec(2, width = "6em") %>%
+    column_spec(3, width = "6em") %>%
+    column_spec(4, width = "6em") %>%
+    column_spec(5, width = "6em") %>%
+    column_spec(6, width = "6em") %>%
+    column_spec(7, width = "6em") 
+
+GWProws <- seq_len(nrow(GlobalWarmingPotentials) %/% 2)
+kable(list(GlobalWarmingPotentials[GWProws,1:2],  
+           matrix(numeric(), nrow=0, ncol=1),
+           GlobalWarmingPotentials[-GWProws, 1:2]), 
+      caption = tableCaption("Global warming potentials (IPCC AR4)", "-GWPs"),
+      format = "latex", 
+      align = "lr",
+      booktabs = TRUE, escape = FALSE) 
+
+GWPsForBlendedRefrigerants %>%
+  kable(
+    caption = tableCaption(
+      "Global warming potentials for blended refrigerants (IPCC AR4)", "-GWPrefrig"),
+    format = "latex",
+    align = "lr", 
+    booktabs = TRUE, escape = FALSE) %>%
+  kable_styling(
+    bootstrap_options = c("hover", "condensed"),
+    latex_options = c("hold_position"))
+
+
+```

@@ -1,0 +1,35 @@
+```{r message=FALSE, warning=FALSE}
+# title: "GHGsByCountyPerCapitatab.Rmd"
+# author: "Eric Koski"
+# date: "1/4/2020"
+#     Copyright (c) 2021 Orebed Analytics LLC under MIT License; see LICENSE.md. 
+# 
+#     Data files produced by this software are licensed under a Creative Commons 
+#     Attribution 4.0 International License; see
+#     https://creativecommons.org/licenses/by/4.0/. 
+
+# Now let's do the table
+if (outputFormat == "pdf_document") {
+  GHGsbyCountyPerCapita %>%
+    kable(escape = FALSE, digits = 2, booktabs = TRUE,
+          align = c("lrrrrrrr"),
+          linesep = c("", "", "", "", "", "",  "", "", "\\midrule"),
+          caption = tableCaption( 
+            "CO$_2$-equivalent agricultural/industrial GHG emissions per capita, metric tons")) %>%
+    kable_styling(bootstrap_options = c("hover", "condensed"),
+                  latex_options = c("hold_position"),
+                  position = "center",
+                  font_size = 11)
+} else { # HTML in case we ever use it. 
+  GHGsbyCountyPerCapita %>%
+    kable(escape = FALSE, digits = 0, booktabs = TRUE,
+          align = c("lrrrrrrr"),
+          linesep = c("", "", "", "", "", "",  "", "", "\\midrule"),
+          caption = tableCaption( 
+            "CO$_2$-equivalent agricultural/industrial GHG emissions per capita, metric tons")) %>%
+    kable_styling(bootstrap_options = c("hover", "condensed"),
+                  position = "center",
+                  font_size = 11)
+}
+
+```

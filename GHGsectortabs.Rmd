@@ -1,0 +1,76 @@
+```{r message=FALSE, warning=FALSE}
+# title: "GHGsectortabs.Rmd"
+# author: "Eric Koski"
+# date: "1/8/2020"
+#     Copyright (c) 2021 Orebed Analytics LLC under MIT License; see LICENSE.md. 
+# 
+#     Data files produced by this software are licensed under a Creative Commons 
+#     Attribution 4.0 International License; see
+#     https://creativecommons.org/licenses/by/4.0/. 
+
+# library(tidyverse)
+
+GHGsectorCounty2016 <- GHGemissions2016SectorCountySummary %>%
+  pivot_wider(id_cols = Sector, 
+              names_from = County,
+              values_from = CO2e100mt,
+              values_fill = list(CO2e100mt = 0)) %>%
+  select(Sector, rev(GHGcounties)) 
+
+GHGsectorCounty2016$Sector <- factor(GHGsectorCounty2016$Sector, levels = rev(sectorOrder))
+
+GHGsectorCounty2016 <- GHGsectorCounty2016 %>%
+  arrange(Sector)
+
+GHGsectorCounty2016 <- GHGsectorCounty2016 %>%
+  mutate(CountyDist = "", Total = 0)
+
+for (i in 1:nrow(GHGsectorCounty2016)) {
+  row <- slice(GHGsectorCounty2016, i)
+  row$Total <- sum(select(row, one_of(countyNames)))
+  countyGHGs <- select(row, one_of(rev(GHGcounties)))
+  if (sum(countyGHGs) < 0.00001) {
+    GHGsectorCounty2016[i,]$CountyDist <- ""
+  } else {
+    GHGfractions <- lapply(countyGHGs, function(x) (x/row$Total))
+    GHGsectorCounty2016[i,]$CountyDist <- 
+      sparkline(yspikes = GHGfractions, 
+                width=8, 
+                bottomline = FALSE)
+  }
+}
+
+GHGsectorCounty2016 <- GHGsectorCounty2016 %>%
+  mutate(`County distribution` = CountyDist) %>%
+  select(Sector, `County distribution`, rev(GHGcounties)) 
+
+for (cty in countyNames) {
+  GHGsectorCounty2016 <- GHGsectorCounty2016 %>%
+    mutate(!!sym(cty) := formatC(!!sym(cty), format = "d", big.mark = ","))
+}
+
+GHGsectorCounty2016 %>%
+  kable(caption = 
+          tableCaption("CO$_2$-equivalent GHG emissions per sector and county, metric tons CO$_2$"),
+        digits = 0,
+        format = "latex", 
+        align = "llrrrrrrrrr", 
+        booktabs = TRUE, escape = FALSE,
+        linesep = c("\\addlinespace[1mm]")) %>%
+  column_spec(1, width = "6.3em") %>%
+  column_spec(2, width = "5.3em") %>%
+  column_spec(3, width = "3em") %>%
+  column_spec(4, width = "3.1em") %>%
+  column_spec(5, width = "3.4em") %>%
+  column_spec(6, width = "3em") %>%
+  column_spec(7, width = "2.7em") %>%
+  column_spec(8, width = "3em") %>%
+  column_spec(9, width = "2.5em") %>%
+  column_spec(10, width = "2.6em") %>%
+  column_spec(11, width = "4.1em") %>%
+  kable_styling(bootstrap_options = c("hover", "condensed"),
+                latex_options = c("hold_position"),
+                position = "center",
+                font_size = 9)
+
+```

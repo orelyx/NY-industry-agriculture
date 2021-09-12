@@ -1,0 +1,80 @@
+```{r }
+# title: "energyBySector3digxCountyLYtab.Rmd"
+# author: "Eric Koski"
+# date: "12/14/2019"
+#     Copyright (c) 2021 Orebed Analytics LLC under MIT License; see LICENSE.md. 
+# 
+#     Data files produced by this software are licensed under a Creative Commons 
+#     Attribution 4.0 International License; see
+#     https://creativecommons.org/licenses/by/4.0/. 
+# We're going to fuss a lot with the dataset we use to render the table, 
+# so let's make our own copy, filtered to contain only the latest year's data.  
+energyBySector3digxCountyLY_tab <- GFLcountyEnergyPerFuelLY_3dig %>%
+  filter(YEAR == max(YEAR)) %>%
+  mutate(allFuels = rowSums(select(., !!!syms(fuelNamesLY)))) %>%
+  select(YEAR, County, NAICS3dig, NAICSname3dig, allFuels) %>%
+  select(-YEAR) %>%
+  pivot_wider(names_from = County, values_from = allFuels)  
+
+# pivot_wider creates spurious NAs; replace them with 0s. 
+for (cty in countyNames) {
+  energyBySector3digxCountyLY_tab[[cty]][
+    which(is.na(energyBySector3digxCountyLY_tab[[cty]]))] <- 0
+}
+
+energyBySector3digxCountyLY_tab <- energyBySector3digxCountyLY_tab %>%
+  mutate(`Sector totals` = rowSums(select(., !!!syms(countyNamesLY)))) %>%
+  arrange(desc(`Sector totals`)) %>%                         # sort descending by sector totals
+  mutate(NAICSnameNum3dig = str_c(NAICS3dig, ". ",           # combine columns and scrub off 'T's 
+                                  stri_replace_all_regex(NAICSname3dig, "T$", ""))) %>%
+  rename(`Sector (NAICS)` = NAICSnameNum3dig) %>%
+  select(-NAICSname3dig, -NAICS3dig) %>%                     # remove columns now superfluous
+  select(`Sector (NAICS)`, !!!syms(countyNamesLY),           # move sector to far left
+         `Sector totals`) %>%                                # and reorder columns
+  # Add summary row at the bottom
+  bind_rows(summarise_all(., ~(if(is.numeric(.)) sum(.) else "Totals"))) %>%
+  # Convert numbers to strings with thousands separators
+  mutate_if(is.numeric, ~formatC(as.integer(round(.)), big.mark = ","))
+
+# How precisely we render the table depends on whether we're rendering to HTML or pdf. 
+if (outputFormat == "pdf_document") {
+  energyBySector3digxCountyLY_tab %>%
+    kable(escape = FALSE, digits = 0,
+          align = c("lrrrrrrrrrr"),
+          caption = tableCaption(str_c(as.character(
+            max(GFLcountyEnergyPerFuelLY_3dig$YEAR)), 
+            " energy use (millions of BTU) by industry sector and county")),
+          booktabs = TRUE, linesep = c("")) %>%
+    add_header_above(c(" " = 1, "Counties" = 9)) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                  latex_options = c("repeat_header", "striped"),   # "hold_position", 
+                  position = "center",
+                  font_size = 8, fixed_thead = TRUE,
+                  stripe_color = honeydew) %>%
+    row_spec(nrow(energyBySector3digxCountyLY_tab) - 1,
+             hline_after = TRUE) %>%
+    row_spec(nrow(energyBySector3digxCountyLY_tab),
+             background = "#FFFFFF") %>%
+    column_spec(1, width = "12em") %>%
+    column_spec(2, width = "4em") %>%
+    column_spec(3, width = "3.7em") %>%
+    column_spec(4, width = "3.6em") %>%
+    column_spec(5, width = "3.5em") %>%
+    column_spec(6, width = "3.5em") %>%
+    column_spec(7, width = "3.4em") %>%
+    column_spec(8, width = "3.4em") %>%
+    column_spec(9, width = "3.7em") %>%
+    column_spec(10, width = "3.8em") %>%
+    column_spec(11, width = "4.4em")
+} else {                           # probably "html_document"
+  energyBySector3digxCountyLY_tab %>%
+    kable(escape = FALSE, digits = 0, longtable = TRUE,
+          align = c("lrrrrrrrr"),
+          caption = "2016 energy use (millions of BTU) by county and industry sector") %>%
+    add_header_above(c(" " = 1, "Fuel types" = 8)) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                  latex_options = c("hold_position", "repeat_header", "striped"),
+                  position = "center",
+                  font_size = 11, fixed_thead = TRUE) %>%
+    column_spec(2, width = "8em")
+}

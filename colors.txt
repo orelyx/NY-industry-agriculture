@@ -1,0 +1,25 @@
+"#ff00aa", "#1a1980", "#1affb2", "#bf8c26", "#800d59", "#1ab3ff", "#1a801a", "#ff0000", "#3333ff", "#1a5e80", "#bbff33", "#bf0000"
+
+or 
+# from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+"#e6194B", "#000075", "#3cb44b", "#9A6324", "#4363d8", "#f58231", "#42d4f4", "#f032e6", "#469990", "#800000", "#ffe119", "#aaffc3", "#ffe119", "#e6beff"
+
+The second group seems to work better.
+
+Also there's https://mokole.com/palette
+
+# darkslate-    maroon2     olive       darkblue      
+# gray                                              
+  "#2f4f4f",    "#7f0000",  "#808000",  "#00008b",       
+
+# medium-       red         orange      chartreuse     
+# turquoise                                    
+  "#48d1cc",    "#ff0000",  "#ffa500",  "#7fff00",       
+
+# mediumspring- dark-       blue        fuchsia           
+# green         salmon
+  "#00fa9a",    "#e9967a",  "#0000ff",  "#ff00ff",       
+
+# laserlemon    dodgerblue  plum        deep-
+#                                       pink
+  "#1e90ff",    "#ffff54",  "#dda0dd",  "#ff1493"
