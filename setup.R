@@ -7,22 +7,12 @@
 #     Attribution 4.0 International License; see
 #     https://creativecommons.org/licenses/by/4.0/. 
 
-library(tidyverse)
-library(tidyselect)
-library(stringi)
-library(readxl)
-library(scales)
-library(fs)
-library(utils)
-library(markdown)
-library(rmarkdown)
-library(kableExtra)
-library(bookdown)
-library(git2r)
-library(R6)
-library(glue)
-library(latex2exp)
-library(ltxsparklines)
+source("installPackages.R")
+
+for (p in requiredPackages) {
+  library(p, character.only = TRUE)
+}
+
 usepackage_latex("siunitx")
 
 options(ltxsparklines.output='knitr')
