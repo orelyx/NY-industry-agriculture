@@ -130,7 +130,7 @@ GHGemissionsMfgDetailHighest <- GHGemissionsMfgDetailHighest %>%
 for (i in 1:nrow(GHGemissionsMfgDetailHighest)) {
   row <- slice(GHGemissionsMfgDetailHighest, i)
   countyGHGs <- select(row, one_of(countyNames))
-  countyGHGs <- countyGHGs[,order(-countyGHGs[1,])]
+  countyGHGs <- countyGHGs[,order(as_vector(-countyGHGs[1,]))]
   if (sum(countyGHGs) < 0.00001) {
     GHGemissionsMfgDetailHighest[i,]$HighestCounties <- ""
     GHGemissionsMfgDetailHighest[i,]$CountyDist <- ""
@@ -183,7 +183,7 @@ GHGemissionsAgDetailHighest <- GHGemissionsAgDetailHighest %>%
 for (i in 1:nrow(GHGemissionsAgDetailHighest)) {
   row <- slice(GHGemissionsAgDetailHighest, i)
   countyGHGs <- select(row, one_of(countyNames))
-  countyGHGs <- countyGHGs[,order(-countyGHGs[1,])]
+  countyGHGs <- countyGHGs[,order(as_vector(-countyGHGs[1,]))]
   if (sum(countyGHGs) < 0.00001) {
     GHGemissionsAgDetailHighest[i,]$HighestCounties <- ""
     GHGemissionsAgDetailHighest[i,]$CountyDist <- ""
@@ -236,7 +236,7 @@ GHGemissionsConstrDetailHighest <- GHGemissionsConstrDetailHighest %>%
 for (i in 1:nrow(GHGemissionsConstrDetailHighest)) {
   row <- slice(GHGemissionsConstrDetailHighest, i)
   countyGHGs <- select(row, one_of(countyNames))
-  countyGHGs <- countyGHGs[,order(-countyGHGs[1,])]
+  countyGHGs <- countyGHGs[,order(as_vector(-countyGHGs[1,]))]
   if (sum(countyGHGs) < 0.00001) {
     GHGemissionsConstrDetailHighest[i,]$HighestCounties <- ""
     GHGemissionsConstrDetailHighest[i,]$CountyDist <- ""
@@ -290,7 +290,7 @@ GHGemissionsMiningDetailHighest <- GHGemissionsMiningDetailHighest %>%
 for (i in 1:nrow(GHGemissionsMiningDetailHighest)) {
   row <- slice(GHGemissionsMiningDetailHighest, i)
   countyGHGs <- select(row, one_of(countyNames))
-  countyGHGs <- countyGHGs[,order(-countyGHGs[1,])]
+  countyGHGs <- countyGHGs[,order(as_vector(-countyGHGs[1,]))]
   if (sum(countyGHGs) < 0.00001) {
     GHGemissionsMiningDetailHighest[i,]$HighestCounties <- ""
     GHGemissionsMiningDetailHighest[i,]$CountyDist <- ""

@@ -9,7 +9,7 @@ thanks: "**Current version**: `r format(Sys.time(), '%B %d, %Y')`; **Correspondi
 output:
   pdf_document:
     highlight: tango
-    latex_engine: lualatex
+    latex_engine: xelatex
     keep_tex: yes
     includes:
       in_header: style.tex
