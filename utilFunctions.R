@@ -68,7 +68,7 @@ searchRegex <- function(vec) {
 
 #####################################################################
 # In column indexCol of df, look up the unique row in which the value
-# of indexCol # contains all of the char values in rowSearch. Then 
+# of indexCol contains all of the char values in rowSearch. Then 
 # select the unique column whose name contains all of the char values 
 # in colSearch. Return the unique value found as double. Returns NA
 # if no value or multiple values found. 
