@@ -1,0 +1,514 @@
+---
+title: 'Energy use and resulting greenhouse gas emissions from industry and agriculture in `r if (params$region == "New York State") { "New York State" } else { paste0("the ", params$region, " region") }` '
+author: 
+- name: 'Eric Koski'
+- affiliation: "Climate Solutions Accelerator of the Genesee-Finger Lakes Region; Orebed Analytics LLC"
+date: '`r format(Sys.Date(), "%d %B %Y")`'
+thanks: "**Current version**: `r format(Sys.time(), '%B %d, %Y')`; **Corresponding author**: eric@orebed-analytics.com. This report is publicly released under the [Creative Commons Attribution 4.0 International license](https://creativecommons.org/licenses/by/4.0/legalcode.en). The accompanying software (used to generate the report) is released under MIT license; see LICENSE.md."
+
+output:
+  pdf_document:
+    highlight: tango
+    latex_engine: xelatex
+    keep_tex: yes
+    includes:
+      in_header: style.tex
+    template: "svm-latex-ms.tex"
+    citation_package: biblatex
+    extra_dependencies: 
+      parskip: ["parfill"]
+
+  html_document:
+    highlight: tango
+    theme: default
+    keep_md: yes
+    
+params:
+  region:
+    label: "Region:"
+    value: "New York State"
+    input: select
+    choices: ["Western New York", "Finger Lakes", "Southern Tier", "Central New York", "North Country", "Mohawk Valley", "Capital District", "Hudson Valley", "New York City", "Long Island", "New York State"]
+
+geometry: margin=2cm
+
+abstract: "In support of the State of New York's Climate Leadership and Community Protection Act (CLCPA) and as part of the state's Climate Smart Communities program, regions, counties, and municipalities within the state are preparing climate action plans describing local and regional actions aimed at reducing the greenhouse gas emissions responsible for climate change. A key element of each such action plan is a Greenhouse Gas Inventory, which should provide rigorously-derived estimates of the area's current levels of greenhouse gas (GHG) emissions to serve as a basis for goal-setting and advancing the area's renewable energy transition. Two sectors in which greenhouse gas emissions have been difficult to measure or estimate are the industrial and agricultural sectors, which can be responsible for as much as 15 to 25% of an area's total greenhouse gas emissions. A dataset from the US National Renewable Energy Laboratory (NREL) provides detailed breakdowns of US energy use by county and industry sector, which are analyzed in this report to generate profiles of energy use in the industrial and agricultural sectors for the region, using the US Environmental Protection Agency 2018 emission factors for estimating greenhouse gas emissions from energy use; these are used to estimate and analyze greenhouse gas emissions from industry and agriculture across the region."
+
+papersize: letter
+linkcolor: blue
+fontfamily: mathpazo
+lang: en-US
+appendices:
+  ownnumbering: yes     # give appendices their own pagination: A-1, B-1 etc. 
+numbersections:
+  secnumdepth: 3
+referencepagenumbers:
+  prefix: 'ref--'           # prefix applied to roman page numbers in references section
+figtabcounterwithin: yes
+bibliography: "GHGI-master.bib"
+fontsize: 11pt
+skipbeforeabstract: 2pt   # tweak space between first hline and abstract
+header-includes:
+    - \usepackage{setspace}
+    - \usepackage [american]{babel}
+    - \usepackage [autostyle, english = american]{csquotes}
+    - \MakeOuterQuote{"}
+    
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE)
+
+outputFormat <- "pdf_document"    # rmarkdown::all_output_formats(knitr::current_input())[[1]]
+
+source("setup.R", local = knitr::knit_global())
+source("utilFunctions.R", local = knitr::knit_global())
+source("conversions.R", local = knitr::knit_global())
+
+
+AllRegionsCounties <- list(
+  "Western New York" = c("Niagara", "Erie", "Chautauqua", "Cattaraugus", "Allegany"),
+  "Finger Lakes" = c("Monroe", "Orleans", "Genesee", "Wyoming", "Livingston", "Ontario", "Yates",  "Wayne",   "Seneca"),
+  "Southern Tier" = c("Steuben", "Schuyler", "Chemung", "Tompkins", "Tioga", "Chenango", "Broome", "Delaware"),
+  "Central New York" = c("Cortland", "Cayuga", "Onondaga", "Oswego", "Madison"),
+  "North Country" = c("St. Lawrence", "Lewis", "Jefferson", "Hamilton", "Essex", "Clinton", "Franklin"),
+  "Mohawk Valley" = c("Oneida", "Herkimer", "Fulton", "Montgomery", "Otsego", "Schoharie"),
+  "Capital District" = c("Albany", "Columbia", "Greene", "Warren", "Washington", "Saratoga", "Schenectady", "Rensselaer"),
+  "Hudson Valley" = c("Sullivan", "Ulster", "Dutchess", "Orange", "Putnam", "Rockland", "Westchester"),
+  "New York City" = c("New York", "Bronx", "Queens", "Kings", "Richmond"),
+  "Long Island" = c("Nassau", "Suffolk")
+)
+
+CountyRegions <- NULL
+
+for (r in names(AllRegionsCounties)) {
+  for (c in AllRegionsCounties[[r]]) {
+    CountyRegions <- CountyRegions %>%
+      bind_rows(tibble(County = c,
+                       Region = r))
+  }
+}
+
+regions <- unique(CountyRegions$Region)
+numberOfRegions <- length(regions)
+
+AllRegionsCounties[["New York State"]] <- c(unname(unlist(AllRegionsCounties)))
+
+if (outputFormat == "pdf_document") {
+  Region <- params$region
+} else {
+  Region <- names(AllRegionsCounties)[
+    tryCatch(menu(names(AllRegionsCounties), graphics = FALSE, title = "Select region                                   "),
+             error = function (e) {
+             })]
+  if (length(Region) == 0) {
+    message("Invalid selection -- defaulting to New York State.")
+    Region <- "New York State"
+  }
+}
+
+RegionCounties <- sort(AllRegionsCounties[[Region]])
+
+numberOfCounties <- length(RegionCounties)
+
+```
+
+
+# Introduction^[**commit:** `r gitStatusBrief`]
+
+As the public comes to understand the gravity and urgency of the climate crisis, governments and related organizations are undertaking climate initiatives with the goal of reducing or eliminating the greenhouse gas emissions of a state, region, or community. A key first step in any such initiative is preparing a Greenhouse Gas Inventory [@nyserdaNewYorkState2019][@epaInventoryGreenhouseGas2017] providing reliable estimates of annual anthropogenic (human-caused) greenhouse gas emissions for the region of interest. Such an inventory is needed in order to fill a number of key roles for the initiative:
+
+- Providing a defined starting point or baseline: What are the region's current anthropogenic greenhouse gas emissions? What is their impact on the global climate crisis? 
+- Solution identification and prioritization: What economic sectors and activities are responsible for significant amounts of greenhouse gas emissions? What candidate solutions are potentially applicable and will have the greatest favorable impact? 
+- Target-setting: What reduced levels of net greenhouse gas emissions do we want to achieve, and over what time frame?
+- Progress tracking (in due course): *n* years into the plan, what are the region's annual GHG emissions? How successful have actions under the plan been in reducing them? If other changes in GHG emissions have occurred, what were the causes? Does the plan need to be revised as a result?
+- Public education and advocacy: What actions at an individual or community level have the greatest potential to reduce GHG emissions? How can individuals take action to further these reductions? 
+
+These objectives can be more effectively realized to the extent that the prepared inventory has several important attributes: it needs to be 
+
+- credible, using sound methods based on authoritative research to measure and estimate emissions; 
+- transparent, using clearly-defined, surveyable algorithms and techniques to obtain emissions estimates; 
+- open, lending itself to being publicly reviewed, analyzed, and defended; 
+- fine-grained, permitting emissions sources to be unambiguously identified and made objects of targeted actions; 
+- versatile, facilitating the preparation of made-to-order analyses and visualizations in support of the diverse tasks and challenges of the transition to a sustainable economy; 
+- extendable, facilitating incorporation of new data as the effort proceeds. 
+
+The inventory presented in this document provides estimates for a clearly-defined subset of the region's greenhouse gas emissions: emissions resulting from energy use in the economic sectors of manufacturing, agriculture, construction, and mining, which may jointly constitute only around 10 to 15\% of the total emissions across all economic sectors. At the same time, it is intended to illustrate effective methods for documenting and presenting the contents of an emissions inventory in order to inform and guide the activities through which emissions can be reduced or eliminated. 
+
+
+# Data sources
+
+The industrial and agricultural economic sectors have been recognized as being especially challenging to address in climate change mitigation activities due to the diversity of activities and processes involved [@faisCriticalRoleIndustrial2016]. Recognizing these challenges, a research group at the US National Renewable Energy Laboratory has sought to develop efficient and reliable techniques for estimating energy use in these sectors through the development of the NREL Industrial Emissions Tool (IET) [@mcmillanIndustryEnergyTool2018]. In addition, they have used the IET to develop and publish a dataset of industrial and agricultural GHG energy use statistics broken down to the level of individual counties, NAICS activity codes [@ombNORTHAMERICANINDUSTRY2017], and fuel types used for energy generation for the entire United States, the NREL Industrial Energy Data Book (IEDB) [@mcmillanNRELIndustryenergydatabook2019], published through the [NREL data catalogue](https://data.nrel.gov/submissions/122). The analyses presented here use the IEDB in conjunction with publicly-available tables of [County FIPS codes](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/national/home/?cid=nrcs143_013697) [@usdanrcsCountyFIPSCodes2019] and [2017 NAICS codes](https://www.census.gov/eos/www/naics/2017NAICS/2017_NAICS_Structure.xlsx) [@ombNORTHAMERICANINDUSTRY2017]. 
+
+The energy use statistics in [@mcmillanNRELIndustryenergydatabook2019] are drawn from a variety of sources. Facilities with large amounts of greenhouse gas emissions are required to report their emissions under the US EPA's Greenhouse Gas Reporting Program (GHGRP) [@u.s.environmentalprotectionagencyGreenhouseGasReporting2014]. These reported quantities are used directly. To obtain emissions estimates for the far more numerous smaller emitters in the manufacturing, agricultural, mining, and construction sectors, data are combined from 
+
+- the EPA's Manufacturing Energy Consumption Survey (MECS) [@eiaManufacturingEnergyConsumption2019] 
+- the US Energy Information Administration's EIA Form-923 data on electricity use [@eiaFormEIA923Detailed2018]
+- the US Department of Agriculture's Agriculture Survey [@usdaUSDANationalAgricultural2019][@usdaUSDANASSQuickStats2019] and Census of Agriculture [@usdaUSDANationalAgricultural2019a]
+- the US Census Bureau's Economic Census [@uscensusbureauEconomicCensus2019] and County Business Patterns (CBP) dataset [@uscensusbureauCountyBusinessPatterns2019]
+
+in order to first estimate the relationship between facility size and emissions for each economic sector; these estimates are combined with the numbers and sizes (employment, fuel and lubricant cost data, etc.) of emissions-generating facilities to obtain GHG emissions estimates [@mcmillanIndustryEnergyTool2018]. 
+
+```{r importCountyEsts, cache=FALSE, include=FALSE, message=FALSE, warning=FALSE}
+source("importCountyEsts.R")
+
+```
+
+```{r NAICSitems, include=FALSE, message=FALSE, warning=FALSE}
+source("NAICSitems.R")
+
+```
+
+Because of its reliance on census data available only after a time-lag of about three years, the NREL IEDB provides energy use data only through calendar year 2016. It is likely that any Greenhouse Gas Inventory would be similarly limited for similar reasons; for instance, New York State's Greenhouse Gas Inventory for years 1990-2016 [@nyserdaNewYorkState2019] was not published until July 2019. 
+
+# Tools and methods
+
+The analyses and illustrations presented in this report were prepared using the R programming language [@rcoreteamLanguageEnvironmentStatistical2019] and the powerful associated collection of tools for data analysis and visualization [@wickhamGgplot2ElegantGraphics2016][@wickhamWelcomeTidyverse2019a]. The report itself is prepared using an R facility known as Rmarkdown [@allairejjRmarkdownDynamicDocuments2019], in which a single file or collection of files contains both the text of a document such as this one and the code (which needn't only be R code) used to generate the analysis it presents. Management of the document and code as a single unit permits the use of the rich, capable version control tools available to software developers and ensures that the document in its final form is reproducible. In use of Rmarkdown, the code used to generate elements such as figures and tables can be presented interleaved with the document text as desired, in the form of 'code chunks' such as the example below. 
+
+```{r countyNames, echo=TRUE, fig.cap="\\label{fig:countyNames}Representative code chunk example", message=FALSE, warning=FALSE, size="scriptsize"}
+# I had been using countyNames.Rmd as a child document here, but ran into an Rstudio deficiency that 
+# makes debugging the document harder: the "Run All Chunks Above" and "Run Current Chunk" icons 
+# shown in the upper right corner of the chunk don't work when the chunk is a child document. This 
+# is a longstanding issue: see https://community.rstudio.com/t/making-child-code-chunks-execute-
+# by-clicking-run-current-chunk/12907
+# and https://stackoverflow.com/questions/48764918/rmarkdown-running-child-chunks-from-inside-
+# rstudio/48777264. 
+
+# The NREL dataset identifies counties only by FIPS code. We get the corresponding county-names 
+# and add them to the dataset along with the NAICS sector names and descriptions. Then we filter 
+# to just the counties of the selected Region.
+
+County_FIPS_codes <- read_delim("County FIPS codes.txt", 
+    "\t", escape_double = FALSE, col_names = FALSE, 
+    trim_ws = TRUE) %>% 
+  transmute(COUNTY_FIPS = X1, County = X2, State = X3)
+
+NYcountyEnergyEsts <- Updated_county_energy_estimates %>% 
+  filter(STATE == "NEW YORK") %>%                       # Keep only the NEW YORK rows
+  left_join(County_FIPS_codes, by = "COUNTY_FIPS") %>%  # Add county names
+  # We have to do some finagling here. The NREL IEDB dataset contains some records in which 
+  # the NAICS code given is "11193 & 11194 & 11199" or "1125 & 1129". These result in NAs
+  # when we convert them to numeric; we replace them with synthesized codes in fixNAICSgaps.R. 
+  mutate(across(NAICS, ~suppressWarnings(as.numeric(.)))) %>%  
+  left_join(NAICS_Descriptions_2017, by = "NAICS") %>%  # Add NAICS code names and 
+                                                        # descriptions
+  mutate(across(County, ~str_replace(., "St Lawrence", "St. Lawrence"))) 
+
+RegionEnergyEsts <- NYcountyEnergyEsts %>% 
+  filter(County %in% RegionCounties)
+
+# The NREL dataset contains some rows with missing MMBTU_TOTAL values; these result in NAs. 
+# Replace the NAs with 0s. 
+RegionEnergyEsts[["MMBTU_TOTAL"]][
+    which(is.na(RegionEnergyEsts[["MMBTU_TOTAL"]]))] <- 0
+
+```
+
+```{r synthesizeNAICScodes, include=FALSE}
+# The NAICS code's numerical structure has some gaps representing flaws in the hierarchy; for 
+# instance, there are no 1-digit or 2-digit codes for 'Manufacturing' (should be 3) or 'Trade, 
+# Transportation, and Warehousing' (should be 4). We synthesize the codes we will need, giving 
+# them names and descriptions respecting their positions relative to the pre-existing native 
+# NAICS sector definitions. 
+source("synthesizeNAICScodes.R")
+```
+
+```{r makeSlicedNAICSs, include=FALSE}
+# Next we merge in the synthesized codes, and make sliced versions of the NAICS dataset 
+# containing only 1-, 2-, 3-, or 4-digit codes.
+source("makeSlicedNAICSs.R")
+```
+
+```{r fixNAICSgaps, include=FALSE}
+source("fixNAICSgaps.R")
+```
+
+```{r finishNRELdatasets, include=FALSE}
+source("finishNRELdatasets.R")
+```
+
+```{r getEPAemissionsFactors, echo=FALSE, message=FALSE, cache=FALSE}
+source("EPA/getEPAemissionsFactors.R")
+```
+
+\clearpage
+# Energy use
+
+One of the benefits of using the NREL IEDB is the insight it provides into changes in energy use patterns that have occurred in recent years. `r ifelse(Region == "New York State", str_c("Table \\ref{tab:energyUsePerCountyYeartab} presents the total industrial and agricultural energy use in each county over the period from ", as.character(earliestYear), " to ", as.character(latestYear), ". "), str_c("Figure \\ref{fig:energyUsePerCountyYearplot} illustrates how industrial and agricultural use changed in each county over the period from ", as.character(earliestYear), " to ", as.character(latestYear), ". ", "Table \\ref{tab:energyUsePerCountyYeartab} presents the same data in numerical form."))`
+
+```{r }
+# , "Table \\ref{tab:energyUsePerCountyYeartab} presents the same data in numerical form."))` 
+```
+
+```{r energyUsePerCountyYearplot, fig.height=3.5, file="energyUsePerCountyYearplot.R", fig.cap="\\label{fig:energyUsePerCountyYearplot}Energy use summary, industrial and agricultural", cache=FALSE}
+```
+
+```{r energyUsePerCountyYeartab, file="energyUsePerCountyYeartab.R", results="markdown", cache=FALSE, out.extra=""}
+```
+
+\pagebreak
+
+```{r energyUsePerFuelYearplot, fig.height=4.1, fig.width = 6.5, file="energyUsePerFuelYearplot.R", fig.cap="\\label{fig:energyUsePerFuelYearplot}Energy use summary, industrial and agricultural by fuel type", cache=FALSE}
+# Render a simple area plot of energy use per fuel type per year. 
+```
+
+
+```{r energyUsePerFuelYeartab, file="energyUsePerFuelYeartab.R", out.extra=""}
+```
+
+
+Figure \ref{fig:energyUsePerFuelYearplot} presents the same total energy use shown above, but this time broken down by fuel type.  
+
+```{r fuelTypeDefinitions, cache=FALSE, file="fuelTypeDefinitions.R", out.extra=""}
+# Read in our table of fuel type definitions, and render the table showing them
+```
+
+Table \ref{tab:fuelTypeDefinitions} provides definitions of the fuel types used in the NREL IEDB and in this document, based on definitions provided by the US Energy Information Agency [@eiaGlossaryEnergyInformation2019][@eiaPetroleumOtherLiquids]. *Net electricity* in most cases refers to energy purchased from grid suppliers, but could refer increasingly to on-site renewable electricity generation in future years. 
+
+```{r countiesLinePlot, file="countiesLinePlot.R", include=FALSE, eval=FALSE, fig.height=9.25, fig.width=6.5, fig.cap="\\label{fig:countiesLinePlot}Annual industrial and agricultural energy use by county", cache=FALSE}
+# Render a line plot of energy/fuel use per county per year -- no longer used
+```
+
+```{r countyAreaPlot, file="countyAreaPlot.R", include=(numberOfCounties<=15), fig.height=(3+(2*floor(log2(numberOfCounties)))), fig.width=6.5, fig.cap="\\label{fig:countyAreaPlot}Annual industrial and agricultural energy use by county and fuel type", cache=FALSE}
+# Render an analogous area plot. 
+```
+
+`r if (Region != "New York State") { str_c("Figure \ref{fig:countyAreaPlot} shows the trend in industrial/agricultural energy and fuel use over the period ", as.character(earliestYear), "-", as.character(latestYear), "; note that vertical scales differ from one panel to another to allow detail to be shown legibly. Differences in fuel type composition from one county to another are very striking, probably resulting from the presence of diverse kinds of industrial and agricultural activity in the counties included in this report. ") }`
+
+Figures \ref{fig:regionPlot1}, \ref{fig:regionPlot2}, and \ref{fig:regionPlot3} show energy use by fuel type for each economic sector represented by a 3-digit NAICS code. (Here again, different panels have different vertical scales.) The contrasts in energy use from one economic sector to another are striking, suggesting that the challenges in making the transition to renewable energy will also be very diverse. 
+
+Table \ref{tab:energyBySector3digLYtab} provides numerical breakdowns of energy use by economic sector and fuel type, with the sectors having highest total energy use at the top and most-used fuels on the left. Table \ref{tab:energyBySector3digxCountyLYtab} provides the analogous breakdowns by sector and county. Comparing the two tables makes it a straightforward process to identify the sectors and approximate locations of the industrial and agricultural activities having the greatest energy use and likely greenhouse gas emissions, which should help focus climate actions where they can have the greatest beneficial impact. 
+
+```{r regionPlot1, file="regionPlot1.R", fig.height=6, fig.width=6.5, fig.align="center", fig.cap="\\label{fig:regionPlot1}Annual energy use by \\textit{non-manufacturing} sector and fuel type, entire region"}
+# Render a plot for the entire region, showing fuel use for each two-digit *non-manufacturing* NAICS sector
+```
+
+\clearpage
+
+```{r regionPlot2, file="regionPlot2.R", fig.height=7.25, fig.width=6.5, fig.align="center", fig.cap="\\label{fig:regionPlot2}Annual energy use by \\textit{manufacturing} sector and fuel type, entire region"}
+# Render a plot for the entire region, showing fuel use for each three-digit *manufacturing* NAICS sector
+```
+
+```{r regionPlot3, file="regionPlot3.R", fig.height=7.25, fig.width=6.5, fig.align="center", fig.cap="\\label{fig:regionPlot3}Annual energy use by \\textit{manufacturing} sector and fuel type, entire region (continued)"}
+```
+
+\clearpage
+```{r energyBySector3digLYtab, file="energyBySector3digLYtab.R", message=FALSE, out.extra=""}
+# Render table showing latest year's energy use by sector and fuel type for the entire region
+```
+
+```{r energyBySector3digxCountyLYtab, file="energyBySector3digxCountyLYtab.R", message=FALSE, out.extra=""}
+# Render table showing latest year's energy use by sector and county for the entire region
+```
+
+\clearpage
+\pagebreak
+# Greenhouse gas emissions
+
+```{r GHGemissions, file="GHGemissions.R", include=FALSE, cache=FALSE, out.extra=""}
+# Compute GHG emissions datasets from energy use by fuel type and EPA emission factors. 
+# Prepare a simple table of CO2, CH4, N2O emissions per mmBTU for our eight fuel types. 
+```
+
+## Assumptions
+
+With the energy use information in hand, it remains only to estimate greenhouse gas emissions using the conversion factors provided by the EPA, considering in turn the various fuel types and industry sectors. Since the energy use quantities are all provided in units of millions of BTU (mmBTU) and quantities of CO~2~, CH~4~, and N~2~O generated are provided per mmBTU for each fuel type, the calculations are quite straightforward, although the assumptions underlying them warrant a degree of scrutiny.^[The EPA tables give differing quantities of greenhouse gas emissions per unit fuel consumption (gallons) for gasoline-fueled vs. diesel-fueled agricultural equipment and for gasoline- vs. diesel-fueled construction equipment. However, the NREL dataset gives us no way to distinguish between gasoline-fueled and diesel-fueled equipment; the assumption appears to be that diesel fuel is used in most cases.] 
+
+- \underline{Coal}: The coal used in the US is of various types. For the year 2016, coal production by weight was 44.6% bituminous, 45.3% sub-bituminous, 9.8% lignite, and less than 0.3% anthracite by weight; or 55% bituminous, 38% sub-bituminous, 6.8% lignite, and less than 0.3% anthracite by heat content.
+The EPA emission factors include a set of emission values for a coal fuel type of "Mixed (Industrial Sector)" which are used below in computing GHG emissions from coal. This is clearly a weighted 
+average of the emission values for the four coal types, based on the relative amounts of these coal grades used by the industrial sector [@eiaAnnualCoalReport2019]. 
+- \underline{Coke and breeze}: In addition to coke derived from coal, US petroleum refineries synthesize significant amounts of petroleum coke; however, nearly all of this 'petcoke' is exported rather than
+being used domestically [@eiaInternationalEnergyOutlook2016]. The EPA emission factors provide values only for Coke (not Breeze), so these are used in the analysis below; breeze apparently differs from coke only in chunk size and not in composition to any significant degree. 
+- \underline{Diesel}: Most diesel fuel used in the US is what is known as "Grade No.2-D diesel fuel", where the "No.2" refers to the fuel's level of density and viscosity. Grade No.2-D diesel fuel is very similar in composition to what the industry classifies as No.2 fuel oil [@johnbachaDieselFuelsTechnical2007]. The EPA emission factors don't specify values for diesel fuel specifically, so the values for No.2 fuel oil are used below. 
+- \underline{LPG and NGL}: The fuel type "LPG-NGL" would appear from its name to apply to two categories of fuels: "Liquefied Petroleum Gases" and "Natural Gas Liquids". However, the EIA definitions don't 
+seem to clearly distinguish the two categories; both are composed primarily of liquefied 
+propane and butane [@eiaPETROLEUMOTHERLIQUIDS]. Accordingly, the analysis below uses the EPA's
+emission factors for "Liquefied Petroleum Gases (LPG)" for this fuel type; EPA provides no separate factors for natural gas liquids. 
+- \underline{Natural gas}: The natural gas fuel type is clearly delineated and has specified emission factors; these are used in the analysis below. 
+- \underline{Net electricity}: For net electricity, the emission factors used are those provided by the EPA in [@u.s.environmentalprotectionagencyEmissionFactorsGreenhouse2018] for the applicable eGRID subregion. Note that the EPA table gives emissions for all three of the principal GHGs in kg/MWh; these are converted to kg or g per mmBTU. 
+- \underline{Other}: Other fuels for the region are almost entirely wood-based biomass fuels, based on statistics for New York State as a whole [@eiaNewYorkState2020]. Modest quantities of wind and 
+hydrolelectric power are also generated for on-site industrial use. Like the latter, biomass 
+is considered for this analysis to have no greenhouse gas emissions, since emitted carbon 
+was earlier absorbed from the atmosphere through photosynthesis (recognizing that this may 
+be an oversimplification; see for instance Costanza et al [@costanzaBioenergyProductionForest2017]). Changes in carbon sequestration capacity due to the conversion from wild forest to harvested commercial forest should be accounted for under land use change. 
+- \underline{Residual fuel oil}: The term "residual fuel oil" as defined applies to both of what are classified as No.5 and No.6 residual fuel oils. No.5 residual fuel oil is evidently used mostly as a fuel for naval and commercial ships [@eiaPETROLEUMOTHERLIQUIDS]. Accordingly, only the emission factors for No.6 residual fuel oil (which has a variety of onshore uses) are used in the analysis below. 
+
+```{r emissionFactorSummarytab, file="emissionFactorSummarytab.R", out.extra=""} 
+```
+
+Table \ref{tab:emissionFactorSummarytab} summarizes the emission factors used for these fuel types. Since the electricity on different portions of the electric transmission grid can be generated using a different mix of energy sources, the EPA specifies a set of emission factors for each of what it calls *eGRID subregions*. Accordingly, the table shows one set of *Net electricity* emission factors for each of the three eGRID subregions in New York State;^[NYLI abbreviates "New York Long Island", i.e., Nassau and Suffolk counties; NYCW refers to the five boroughs of New York City together with Westchester County; and NYUP abbreviates "New York Upstate" and refers to the remainder of the state.] the emission factors used to compute each county's emissions are those for the eGRID subregion in which the county is located. 
+
+
+The greenhouse gas emission quantities in this report are presented in terms of "CO~2~-equivalent emissions," weighting emissions of other greenhouse gases based on their marginal impact on radiative forcing compared to that of an equivalent incremental concentration of CO~2~ [@epaStateLocalClimate2012]. As can be seen in Table \ref{tab:emissionFactorstabs-GWPs}, the global warming potentials of both methane and nitrous oxide are substantially larger than that of carbon dioxide; it is only because CO~2~ is emitted in far greater quantities that it has a greater total impact on the global climate. Based on the NREL dataset and the EPA emission factors, CO~2~ itself accounts for about `r formatC(round(100 * CO2fraction, digits = 1), format = "f", digits = 1)`% of the CO~2~-equivalent agricultural and industrial greenhouse gas emissions of the `r Region` Region; methane and nitrous oxide constitute an almost negligible fraction of these emissions.^[This will not necessarily be true when use of nitrogen-based fertilizers and other agricultural chemicals is considered in a companion report.]
+
+## Results and analysis
+
+```{r GHGsByCountyYearplot, file="GHGsByCountyYearplot.R", fig.height=3.5, fig.cap="\\label{fig:GHGsByCountyYearplot}Annual CO~2~-equivalent agricultural/industrial emissions, metric tons", message=FALSE}
+```
+
+`r if (Region == "New York State") { "Table \\ref{tab:GHGsByCountyYeartabs} provides a summary view " } else { "Figure \\ref{fig:GHGsByCountyYearplot} and Table \\ref{tab:GHGsByCountyYeartabs} provide summary views"}` of estimated annual greenhouse gas emissions for the region, stratified by county. 
+`r if (Region == "New York State") { "Table \\ref{tab:GHGsByCountyPerCapitatab} shows" } else { "Figure \\ref{fig:GHGsByCountyPerCapita} and Table \\ref{tab:GHGsByCountyPerCapitatab} show" }` *per capita* emissions from industrial and agriculture energy use for each county in the region.  For comparison, 2016 emissions per capita for New York State as a whole were found to be about 10 metric tons CO2-equivalent per person -- across all sectors -- with the largest fractions resulting from transportation (37%) and from commercial (18%) and residential (21%) combustion primarily for heating [@nyserdaNewYorkState2019]. Natural gas is the largest remaining source of greenhouse gas emissions as of `r as.character(latestYear)`, with diesel fuel and net electricity also being significant contributors. 
+
+```{r GHGsByCountyYeartabs, file="GHGsByCountyYeartabs.R", out.extra=""}
+```
+
+\clearpage
+
+```{r GHGsByCountyPerCapitaplot, file="GHGsByCountyPerCapitaplot.R", fig.cap="\\label{fig:GHGsByCountyPerCapita}CO~2~-equivalent agricultural/industrial emissions per capita, metric tons", fig.height=3.2}
+```
+
+
+```{r GHGsByCountyPerCapitatab, file="GHGsByCountyPerCapitatab.R", out.extra=""}
+```
+
+\clearpage
+
+```{r GHGsByFuelYearplot, file="GHGsByFuelYearplot.R", fig.cap="\\label{fig:GHGsByFuelYearplot}CO~2~-equivalent agricultural/industrial emissions per fuel type, metric tons", fig.height=4}
+```
+
+As Figure \ref{fig:GHGsByFuelYearplot} illustrates, emissions from coal were about `r str_c(as.character(round(100 * initialCoalFraction)), "%")` of the region's total industrial and agricultural greenhouse gas emissions in `r as.character(earliestYear)`, but about `r str_c(as.character(round(100 * finalCoalFraction)), "%")` by `r as.character(latestYear)`.
+
+```{r GHGanalysis, file="GHGanalysis.R", cache=FALSE, message=FALSE}
+```
+
+## Sector analysis
+
+```{r GHGsectorYearplot, file="GHGsectorYearplot.R", fig.cap="\\label{fig:GHGsectorYearplot}CO~2~-equivalent agricultural/industrial emissions per sector, metric tons", fig.height=2.4}
+```
+
+Figure \ref{fig:GHGsectorYearplot} provides an overview of GHG emissions by economic sector for the region. Table \ref{tab:GHGsectortabs} breaks down each sector's `r as.character(latestYear)` emissions by county.`r if (Region != "New York State") { "^[The County distribution column employs a variant of the sparklines popularized by Edward Tufte [@tufte2006beautiful] to graphically display the approximate geographic breakdown of emissions; the order of the bars corresponds to the order of the county columns to the right.]" }` 
+
+
+```{r GHGsectortabs, file="GHGsectortabs.R", out.extra=""}
+```
+
+The more detailed breakdowns by NAICS category in the following sub-sections yield greater insight into the sources of these emissions. For each of the four sectors, the following pages provide a plot showing the relative emissions quantities for sub-categories of each sector, and the distribution of these emissions across the region. The breakdown to this level of detail makes it possible in some cases to identify specific manufacturing operations responsible for large quantities of emissions. In many cases, these operations are easily identified because they appear in a *large energy users* dataset accompanying the *county energy estimates* dataset used primarily in this analysis [@mcmillanNRELIndustryenergydatabook2019]. Unfortunately, only a fraction of manufacturing operations in the region count as large energy users by the criteria of the EPA's Greenhouse Gas Reporting Program, so further research will be necessary to identify the next tier of significant GHG emitters. Fortunately, additional detail to the level of the entire NAICS six-digit classification can be available for analysis, although it is not presented in this report due to time and space limitations. 
+
+
+\clearpage
+
+### Manufacturing
+
+```{r GHGManufacturingplot, file="GHGManufacturingplot.R", fig.cap="\\label{fig:GHGManufacturingplot}Manufacturing categories with highest CO~2~-equivalent GHG emissions", fig.height = 2.4}
+```
+
+```{r GHGmanufacturingtab, file="GHGmanufacturingtab.R", out.extra=""}
+```
+
+\clearpage
+
+### Agriculture
+
+```{r GHGAgricultureplot, file="GHGAgricultureplot.R", fig.cap="\\label{fig:GHGAgricultureplot}Agriculture categories with highest CO~2~-equivalent GHG emissions", fig.height = 3.5}
+```
+
+```{r GHGAgriculturetab, file="GHGAgriculturetab.R", out.extra=""}
+```
+
+\clearpage
+
+### Construction
+
+```{r GHGConstructionplot, file="GHGConstructionplot.R", fig.cap="\\label{fig:GHGConstructionplot}Construction categories with CO~2~-equivalent GHG emissions", fig.height = 3.5}
+```
+
+
+```{r GHGConstructiontab, file="GHGConstructiontab.R", out.extra=""}
+```
+
+\clearpage
+
+### Mining
+
+```{r GHGMiningplot, file="GHGMiningplot.R", fig.cap="\\label{fig:GHGMiningplot}Mining categories with CO~2~-equivalent GHG emissions", fig.height = 3.5}
+```
+
+
+```{r GHGMiningtab, file="GHGMiningtab.R", out.extra=""}
+```
+
+
+\clearpage
+
+# Limitations and caveats
+
+1. The NREL dataset and the heuristic methods used to generate the estimates it contains deserve scrutiny -- ideally, by comparison with independent sources of information. This may be difficult as the NREL dataset is apparently the most detailed data source available in the areas it covers. 
+2. The presentation of agricultural GHG emissions provided in this report is substantially incomplete as it includes no information about GHG emissions due to use (or overuse) of agricultural chemicals including nitrate fertilizers. This information can be obtained; it just requires more work. 
+3. The GHG emissions profiled in this report are those resulting from fuel combustion for generation of heat, kinetic energy, or electricity. Halocarbon emissions as a byproduct of industrial processes are potentially a significant contributor to global warming because of their very high global warming potentials. The EPA requires reporting of emissions of many of these chemicals as toxic pollutants rather than as greenhouse gases; the relevant reports may provide information useful in analyzing greenhouse gas emissions as well. 
+4. Unfortunately omitted from the NREL dataset is data on GHG emissions from waste management operations such as landfills. This information is also readily obtained and will be included in any full inventory of GHG emissions across the region. 
+
+# Next steps
+
+1. Investigate alternative methods and data sources that could be used to validate energy use and GHG emissions for industry and agriculture based on the NREL IEDB. Useful data sources for this purpose have already been identified, and include agricultural census information from the US Department of Agriculture [@usdaUSDANationalAgricultural2019a][@usdaUSDANationalAgricultural2019], US Census Bureau information[@uscensusbureauCountyBusinessPatterns2019][@uscensusbureauEconomicCensus2019], and information from the New York State government including NYSERDA's *Patterns and Trends* report [@nyserdaPatternsTrendsNew2019] and from the [data.ny.gov](data.ny.gov) portal. 
+2. Conduct and report similar analyses for other sources of greenhouse gas emissions: residential and commercial buildings, transportation, agricultural emissions unrelated to energy use, etc. 
+
+
+\startofappendices
+
+\anappendix{EPA emission factors}
+
+Source: [@u.s.environmentalprotectionagencyEmissionFactorsGreenhouse2018]. The EPA publication includes additional tables; the ones shown here are those directly bearing on the agricultural and industrial sectors' greenhouse gas emissions. 
+
+```{r emissionFactorstabs, child="EPA/emissionFactorstabs.Rmd", out.extra=""}
+# Render tables of EPA emission factors. This apparently needs to be a child document since 
+# it renders multiple tables. NBD. 
+```
+
+
+<!-- \anappendix{Additional energy use tables} -->
+<!-- \pagenumbering{arabic} -->
+<!-- \renewcommand{\thepage}{\thesection--\arabic{page}} -->
+
+<!-- ```{r countySectorLYFueltab, file="countySectorLYFueltab.R", include=FALSE, out.extra=""} -->
+<!-- # Render table (a large one) showing latest year's energy use (per fuel type) by county and 4-digit NAICS code. -->
+<!-- ``` -->
+
+<!-- ```{r countySectorYearFueltab, file="countySectorYearFueltab.R", include=FALSE, echo=FALSE, out.extra=""} -->
+<!-- # Render our big table showing energy use (per fuel type) by county, 1-digit sector, and year -->
+<!-- ``` -->
+
+\anappendix{Additional emissions tables}
+\pagenumbering{arabic}
+\renewcommand{\thepage}{\thesection--\arabic{page}}
+
+```{r GHGcountySectorLYFueltab, file="GHGcountySectorLYFueltab.R", out.extra=""}
+```
+
+```{r writeTotals}
+# These full and summary datasets are useful to look at with other tools, so save them now. 
+# Note that .rds files are already compressed, sparing us the need to do it. 
+if (!dir_exists(str_c("./", Region))) {
+  dir_create(str_c("./", Region))
+}
+write_tsv(RegionEnergyPerFuelYear_1dig, str_c("./", Region, "/RegionEnergyPerFuelYear_1dig.csv"))
+write_tsv(RegionEnergyPerFuelYear_2dig, str_c("./", Region, "/RegionEnergyPerFuelYear_2dig.csv"))
+write_tsv(RegionEnergyPerFuelYear_3dig, str_c("./", Region, "/RegionEnergyPerFuelYear_3dig.csv.gz"))
+write_tsv(RegionEnergyPerFuelYear_4dig, str_c("./", Region, "/RegionEnergyPerFuelYear_4dig.csv.gz"))
+saveRDS(RegionEnergyPerFuelYear_1dig, str_c("./", Region, "/RegionEnergyPerFuelYear_1dig.rds"))
+saveRDS(RegionEnergyPerFuelYear_2dig, str_c("./", Region, "/RegionEnergyPerFuelYear_2dig.rds"))
+saveRDS(RegionEnergyPerFuelYear_3dig, str_c("./", Region, "/RegionEnergyPerFuelYear_3dig.rds"))
+saveRDS(RegionEnergyPerFuelYear_4dig, str_c("./", Region, "/RegionEnergyPerFuelYear_4dig.rds"))
+
+write_tsv(GHGemissionsPerCountyFuelYear1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear1dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYear2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear2dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYear3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear3dig.csv.gz"))
+write_tsv(GHGemissionsPerCountyFuelYear4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear4dig.csv.gz"))
+saveRDS(GHGemissionsPerCountyFuelYear1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear1dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYear2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear2dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYear3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear3dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYear4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear4dig.rds"))
+
+write_tsv(GHGemissionsPerCountyFuelYearWider1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider1dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYearWider2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider2dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYearWider3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider3dig.csv.gz"))
+write_tsv(GHGemissionsPerCountyFuelYearWider4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider4dig.csv.gz"))
+saveRDS(GHGemissionsPerCountyFuelYearWider1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider1dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider2dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider3dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider4dig.rds"))
+
+```
+
+\appendicesendhere
+
+\startofreferences

@@ -9,7 +9,7 @@ $else$
 $endif$
 
 \usepackage[$if(fontenc)$$fontenc$$else$T1$endif$]{fontenc}
-\usepackage[utf8]{inputenc}
+%%\usepackage[utf8]{inputenc}
 
 
 %% 12/25/2019
@@ -34,7 +34,7 @@ $endif$
 
 \renewenvironment{abstract}
  {{%
-    \setlength{\leftmargin}{0mm}
+    \setlength{\leftmargin}{0mm}%
     \setlength{\rightmargin}{\leftmargin}%
   }%
   \relax}
@@ -287,32 +287,24 @@ $endif$
 
 
 $if(abstract)$
-
-
-
-\begin{abstract}
-
-    \hbox{\vrule height .2pt width 41.6pc}
-
-    \vskip 8.5pt % \small 
-
-\noindent $abstract$
-
-$if(keywords)$
-
-\vskip 8.5pt \noindent \emph{Keywords}: $keywords$ \par
-
-    \hbox{\vrule height .2pt width 41.6pc} % length will change depending on margins
-
-
-$else$
-
-    \hbox{\vrule height .2pt width 41.6pc}
-
-$endif$
-
-\end{abstract}
-
+  \begin{abstract}
+  \hbox{\vrule height .2pt width \textwidth}%
+  $if(skipbeforeabstract)$
+    \vskip $skipbeforeabstract$
+  $else$
+    \vskip 6.5pt
+  $endif$
+  \noindent $abstract$
+  $if(keywords)$
+    \vskip 8.5pt 
+    \noindent 
+    \emph{Keywords}: $keywords$ \par
+    \hbox{\vrule height .2pt width \textwidth} % length will change depending on margins
+  $else$
+    \par
+    \hbox{\vrule height .2pt width \textwidth}
+  $endif$
+  \end{abstract}
 $endif$
 
 \vskip -8.5pt

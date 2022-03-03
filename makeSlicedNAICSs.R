@@ -22,11 +22,12 @@ NAICS_Descriptions_2017 <- NAICS_Descriptions_2017 %>%
   mutate(NAICS3dig = trimInt(NAICS, 3)) %>% 
   mutate(NAICS4dig = trimInt(NAICS, 4)) 
 
+# In what follows we drop the descriptions, since they're bulky
+
 # Make a table of the one-digit abbreviated NAICS codes
 NAICS_Descriptions1dig <- NAICS_Descriptions_2017 %>%
   filter(NAICS == NAICS1dig) %>%
-  transmute(NAICS1dig = NAICS1dig, NAICSname1dig = NAICSname, 
-            NAICSdescr1dig = NAICSdescr) %>%
+  transmute(NAICS1dig = NAICS1dig, NAICSname1dig = NAICSname) %>%
   arrange(NAICS1dig) %>%
   distinct()
 
@@ -34,8 +35,7 @@ NAICS_Descriptions1dig <- NAICS_Descriptions_2017 %>%
 NAICS_Descriptions2dig <- NAICS_Descriptions_2017 %>%
   filter(NAICS == NAICS2dig) %>%
   filter(str_length(as.character(NAICS)) == 2) %>%
-  transmute(NAICS2dig = NAICS2dig, NAICSname2dig = NAICSname, 
-            NAICSdescr2dig = NAICSdescr) %>%
+  transmute(NAICS2dig = NAICS2dig, NAICSname2dig = NAICSname) %>%
   arrange(NAICS2dig) %>%
   distinct()
 
@@ -44,8 +44,7 @@ NAICS_Descriptions3dig <- NAICS_Descriptions_2017 %>%
   filter(NAICS == NAICS3dig) %>%
   filter(str_length(as.character(NAICS)) == 3) %>%
   transmute(NAICS3dig = NAICS3dig, 
-            NAICSname3dig = NAICSname, 
-            NAICSdescr3dig = NAICSdescr) %>%
+            NAICSname3dig = NAICSname) %>%
   arrange(NAICS3dig) %>%
   distinct()
 
@@ -54,8 +53,7 @@ NAICS_Descriptions4dig <- NAICS_Descriptions_2017 %>%
   filter(NAICS == NAICS4dig) %>%
   filter(str_length(as.character(NAICS)) == 4) %>%
   transmute(NAICS4dig = NAICS4dig, 
-            NAICSname4dig = NAICSname, 
-            NAICSdescr4dig = NAICSdescr) %>%
+            NAICSname4dig = NAICSname) %>%
   arrange(NAICS4dig) %>%
   distinct()
 
