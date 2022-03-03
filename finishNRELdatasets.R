@@ -8,12 +8,14 @@
 #     https://creativecommons.org/licenses/by/4.0/. 
 
 # A sorted vector of fuel names will be useful. 
-fuelNames <- c("Natural_gas", "Diesel", "Net_electricity", "LPG_NGL", 
-               "Residual_fuel_oil", "Coal", "Coke_and_breeze", "Other")
+fuelNames <- c("Natural gas", "Diesel", "Net electricity", "LPG-NGL", 
+               "Residual fuel oil", "Coal", "Coke and breeze", "Other")
 
 # Add the 1-, 2-, 3-, and 4-digit abbreviated NAICS codes, and the corresponding 
 # names and descriptions
 RegionEnergyEsts <- RegionEnergyEsts %>%
+  rename(`Fuel type` = MECS_FT) %>%
+  mutate(across(`Fuel type`, ~str_replace_all(., c("_" = " ", "LPG NGL" = "LPG-NGL")))) %>%
   mutate(NAICS1dig = trimInt(NAICS, 1)) %>%
   mutate(NAICS2dig = trimInt(NAICS, 2)) %>%
   mutate(NAICS3dig = trimInt(NAICS, 3)) %>%
@@ -30,44 +32,44 @@ RegionEnergyEsts <- RegionEnergyEsts %>%
 
 # Aggregate the energy use for each 1-digit abbreviated NAICS code
 RegionEnergyPerFuelYear1dig <- RegionEnergyEsts %>% 
-  group_by(YEAR, County, NAICS1dig, NAICSname1dig, MECS_FT) %>% 
+  group_by(YEAR, County, NAICS1dig, NAICSname1dig, `Fuel type`) %>% 
   summarize(MMBTU = sum(MMBTU_TOTAL, na.rm = TRUE))
 
 # Make the fuel types columns
 RegionEnergyPerFuelYear_1dig <-pivot_wider(
   RegionEnergyPerFuelYear1dig, 
-  names_from = MECS_FT, 
+  names_from = `Fuel type`, 
   values_from = MMBTU)
 
 # Aggregate the energy use for each 2-digit abbreviated NAICS code
 RegionEnergySumm2dig <- RegionEnergyEsts %>% 
-  group_by(YEAR, County, NAICS2dig, NAICSname2dig, MECS_FT) %>% 
+  group_by(YEAR, County, NAICS2dig, NAICSname2dig, `Fuel type`) %>% 
   summarize(MMBTU = sum(MMBTU_TOTAL, na.rm = TRUE))
 
 # Make the fuel types columns
 RegionEnergyPerFuelYear_2dig <- pivot_wider(RegionEnergySumm2dig, 
-                                               names_from = MECS_FT, 
+                                               names_from = `Fuel type`, 
                                                values_from = MMBTU)
 
 # Aggregate the energy use for each 3-digit abbreviated NAICS code
 RegionEnergySumm3dig <- RegionEnergyEsts %>% 
-  group_by(YEAR, County, NAICS3dig, NAICSname3dig, MECS_FT) %>% 
+  group_by(YEAR, County, NAICS3dig, NAICSname3dig, `Fuel type`) %>% 
   summarize(MMBTU = sum(MMBTU_TOTAL, na.rm = TRUE))
 
 # Make the fuel types columns
 RegionEnergyPerFuelYear_3dig <- pivot_wider(RegionEnergySumm3dig, 
-                                               names_from = MECS_FT, 
+                                               names_from = `Fuel type`, 
                                                values_from = MMBTU)
 
 # Aggregate the energy use for each 4-digit abbreviated NAICS code
 RegionEnergySumm4dig <- RegionEnergyEsts %>% 
-  group_by(YEAR, County, NAICS4dig, NAICSname4dig, MECS_FT) %>% 
+  group_by(YEAR, County, NAICS4dig, NAICSname4dig, `Fuel type`) %>% 
   summarize(MMBTU = sum(MMBTU_TOTAL, na.rm = TRUE))
 
 # Make the fuel types columns
 RegionEnergyPerFuelYear_4dig <- pivot_wider(RegionEnergySumm4dig, 
-                                               names_from = MECS_FT, 
-                                               values_from = MMBTU)
+                                            names_from = `Fuel type`, 
+                                            values_from = MMBTU)
 
 # The pivot_wider()s created NAs in the columns for individual fuels, so let's clean 
 # them up by nonchalantly replacing them with 0s as before. 
@@ -88,14 +90,7 @@ for (fuel in fuelNames) {
 # dataset.)
 RegionEnergyPerCountyYearFuel <- RegionEnergyPerFuelYear_2dig %>% 
   group_by(YEAR, County) %>% 
-  summarize(Diesel = sum(Diesel, na.rm = TRUE), 
-            LPG_NGL = sum(LPG_NGL, na.rm = TRUE), 
-            Net_electricity = sum(Net_electricity, na.rm = TRUE), 
-            Coal = sum(Coal, na.rm = TRUE), 
-            Natural_gas = sum(Natural_gas, na.rm = TRUE), 
-            Coke_and_breeze = sum(Coke_and_breeze, na.rm = TRUE), 
-            Residual_fuel_oil = sum(Residual_fuel_oil, na.rm = TRUE), 
-            Other = sum(Other, na.rm = TRUE))
+  summarize(across(all_of(fuelNames), ~sum(., na.rm = TRUE)))
 
 RegionEnergyPerFuelYear_1dig <- ungroup(RegionEnergyPerFuelYear_1dig)
 RegionEnergyPerFuelYear_2dig <- ungroup(RegionEnergyPerFuelYear_2dig)

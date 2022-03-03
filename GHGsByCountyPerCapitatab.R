@@ -10,13 +10,14 @@
 # Now let's do the table
 if (outputFormat == "pdf_document") {
   GHGsbyCountyPerCapita %>%
-    arrange(County) %>%
     kable(escape = FALSE, digits = 2, booktabs = TRUE, longtable = TRUE,
           align = c("lrrrrrrr"),
           linesep = 
             if(Region == "New York State") {
-              c(rep.int(c(rep.int("", 4), "\\addlinespace"), (numberOfCounties - 1) %/% 5), "\\midrule")
-            } else {
+              c(rep.int(c(rep.int("", 4), "\\addlinespace"), (numberOfCounties) %/% 5), 
+                rep.int("", (numberOfCounties - 1) %% 5), 
+                "\\midrule")
+              } else {
               c(rep.int("", numberOfCounties - 1), "\\midrule")
             },
           caption = tableCaption( 
@@ -24,15 +25,5 @@ if (outputFormat == "pdf_document") {
     kable_styling(latex_options = c("hold_position", "repeat_header"),
                   position = "center",
                   font_size = 11)
-} # else { # HTML in case we ever use it. 
-#   GHGsbyCountyPerCapita %>%
-#     kable(escape = FALSE, digits = 0, booktabs = TRUE,
-#           align = c("lrrrrrrr"),
-#           linesep = c("", "", "", "", "", "",  "", "", "\\midrule"),
-#           caption = tableCaption( 
-#             "CO$_2$-equivalent agricultural/industrial GHG emissions per capita, metric tons")) %>%
-#     kable_styling(bootstrap_options = c("hover", "condensed"),
-#                   position = "center",
-#                   font_size = 11)
-# }
+} 
 

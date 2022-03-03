@@ -21,7 +21,7 @@ GHGemissionsPerCountyFuelLYtab <- GHGemissionsPerCountyFuelYear4dig %>%
   # remove superfluous columns
   select(-NAICSname4dig, -NAICS4dig) %>%
   mutate(CO2e100mt = CO2e100kg * 1.0e-3) %>%
-  pivot_wider(names_from = MECS_FT,
+  pivot_wider(names_from = `Fuel type`,
               values_from = CO2e100mt,
               values_fill = 0,
               id_cols = c(County, `County / Sector (NAICS)`)) %>%

@@ -301,7 +301,6 @@ if (!dir.exists(str_c("./", Region))) {
 }
 
 # These full and summary datasets are useful to look at with other tools, so save them now. 
-# write_tsv(RegionEnergyEsts, "RegionEnergyEsts.tsv.gz")    # Some files are huge, so compress 'em. 
 # Note that .rds files are already compressed, sparing us the need to do it. 
 write_tsv(RegionEnergyPerFuelYear_1dig, str_c("./", Region, "/RegionEnergyPerFuelYear_1dig.csv"))
 write_tsv(RegionEnergyPerFuelYear_2dig, str_c("./", Region, "/RegionEnergyPerFuelYear_2dig.csv"))
@@ -320,3 +319,12 @@ saveRDS(GHGemissionsPerCountyFuelYear1dig, str_c("./", Region, "/GHGemissionsPer
 saveRDS(GHGemissionsPerCountyFuelYear2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear2dig.rds"))
 saveRDS(GHGemissionsPerCountyFuelYear3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear3dig.rds"))
 saveRDS(GHGemissionsPerCountyFuelYear4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear4dig.rds"))
+
+write_tsv(GHGemissionsPerCountyFuelYearWider1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider1dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYearWider2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider2dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYearWider3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider3dig.csv.gz"))
+write_tsv(GHGemissionsPerCountyFuelYearWider4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider4dig.csv.gz"))
+saveRDS(GHGemissionsPerCountyFuelYearWider1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider1dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider2dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider3dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider4dig.rds"))

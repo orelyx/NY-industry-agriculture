@@ -97,7 +97,7 @@ CoalFactors <- tibble(
 # being used domestically [@eiaInternationalEnergyOutlook2016]. 
 
 CokeFactors <- tibble(
-  FuelName = "Coke_and_breeze", 
+  FuelName = "Coke and breeze", 
   CO2 = dfLookup(EmissionFactorsSolidFuels, 
                  "Fuel Type", 
                  c("Coal Coke"),
@@ -138,7 +138,7 @@ DieselFactors <- tibble(
 # oil which has a variety of onshore uses [@eiaPETROLEUMOTHERLIQUIDS]. 
 
 ResidualFuelOilFactors <- tibble(
-  FuelName = "Residual_fuel_oil", 
+  FuelName = "Residual fuel oil", 
   CO2 = dfLookup(EmissionFactorsLiquidFuels, 
                  "Fuel Type", 
                  c("Residual Fuel Oil No. 6"),
@@ -159,7 +159,7 @@ ResidualFuelOilFactors <- tibble(
 # emission factors for "Liquefied Petroleum # Gases (LPG)" for this fuel type.
 
 LPG_NGL_Factors <- tibble(
-  FuelName = "LPG_NGL", 
+  FuelName = "LPG-NGL", 
   CO2 = dfLookup(EmissionFactorsLiquidFuels, 
                  "Fuel Type", 
                  c("Liquefied Petroleum Gases"),
@@ -177,7 +177,7 @@ LPG_NGL_Factors <- tibble(
 # used below. 
 
 NaturalGasFactors <- tibble(
-  FuelName = "Natural_gas", 
+  FuelName = "Natural gas", 
   CO2 = dfLookup(EmissionFactorsGaseousFuels, 
                  "Fuel Type", 
                  c("Natural Gas"),
@@ -211,7 +211,7 @@ eGRIDlookup <- function(subregions, pollutant) {
 subregions <- c("NYUP", "NYCW", "NYLI")
 
 NetElectricityFactors <- tibble(
-  FuelName = "Net_electricity",
+  FuelName = "Net electricity",
   subregion = subregions,
   CO2 = eGRIDlookup(subregions, "CO2") * MWhPerMMBTU,        # kg/mmBTU
   CH4 = eGRIDlookup(subregions, "CH4") * 1000 * MWhPerMMBTU, # kg -> g
@@ -267,9 +267,9 @@ NetElectricityFactors <- NetElectricityFactors %>%
 GHGemissionsCountyYear <- RegionEnergyEsts %>%
   mutate(eGRIDregion = ifelse((County %in% NYCcounties) | (County == "Westchester"), "NYCW",
                               ifelse(County %in% c("Nassau", "Suffolk"), "NYLI", "NYUP"))) %>%
-  left_join(GHGfactors, by = c("MECS_FT" = "FuelName")) %>%
+  left_join(GHGfactors, by = c("Fuel type" = "FuelName")) %>%
   left_join(NetElectricityFactors, 
-            by = c("MECS_FT" = "FuelName", "eGRIDregion" = "subregion"),
+            by = c("Fuel type" = "FuelName", "eGRIDregion" = "subregion"),
             suffix = c(".x", ".y")) 
 
 for(col in emissionColumns) {
@@ -290,7 +290,7 @@ GHGemissionsCountyYear <- GHGemissionsCountyYear %>%
 # Now aggregate the emissions for each abbreviated NAICS code, for 1, 2, 3, and 4-digit 
 # abbreviated codes. 
 GHGemissionsPerCountyFuelYear1dig <- GHGemissionsCountyYear %>%
-  group_by(YEAR, County, NAICS1dig, NAICSname1dig, MECS_FT) %>%
+  group_by(YEAR, County, NAICS1dig, NAICSname1dig, `Fuel type`) %>%
   summarize(CO2kg = sum(CO2kg, na.rm = TRUE),
             CH4kg = sum(CH4kg, na.rm = TRUE),
             N2Okg = sum(N2Okg, na.rm = TRUE),
@@ -298,7 +298,7 @@ GHGemissionsPerCountyFuelYear1dig <- GHGemissionsCountyYear %>%
   ungroup()
             
 GHGemissionsPerCountyFuelYear2dig <- GHGemissionsCountyYear %>%
-  group_by(YEAR, County, NAICS2dig, NAICSname2dig, MECS_FT) %>%
+  group_by(YEAR, County, NAICS2dig, NAICSname2dig, `Fuel type`) %>%
   summarize(CO2kg = sum(CO2kg, na.rm = TRUE),
             CH4kg = sum(CH4kg, na.rm = TRUE),
             N2Okg = sum(N2Okg, na.rm = TRUE),
@@ -306,7 +306,7 @@ GHGemissionsPerCountyFuelYear2dig <- GHGemissionsCountyYear %>%
   ungroup()
 
 GHGemissionsPerCountyFuelYear3dig <- GHGemissionsCountyYear %>%
-  group_by(YEAR, County, NAICS3dig, NAICSname3dig, MECS_FT) %>%
+  group_by(YEAR, County, NAICS3dig, NAICSname3dig, `Fuel type`) %>%
   summarize(CO2kg = sum(CO2kg, na.rm = TRUE),
             CH4kg = sum(CH4kg, na.rm = TRUE),
             N2Okg = sum(N2Okg, na.rm = TRUE),
@@ -314,7 +314,7 @@ GHGemissionsPerCountyFuelYear3dig <- GHGemissionsCountyYear %>%
   ungroup()
 
 GHGemissionsPerCountyFuelYear4dig <- GHGemissionsCountyYear %>%
-  group_by(YEAR, County, NAICS4dig, NAICSname4dig, MECS_FT) %>%
+  group_by(YEAR, County, NAICS4dig, NAICSname4dig, `Fuel type`) %>%
   summarize(CO2kg = sum(CO2kg, na.rm = TRUE),
             CH4kg = sum(CH4kg, na.rm = TRUE),
             N2Okg = sum(N2Okg, na.rm = TRUE),
@@ -324,14 +324,14 @@ GHGemissionsPerCountyFuelYear4dig <- GHGemissionsCountyYear %>%
 CO2fraction <- sum(GHGemissionsCountyYear$CO2kg) / sum(GHGemissionsCountyYear$CO2e100kg)
 
 GHGemissionsPerFuelYear <- GHGemissionsPerCountyFuelYear1dig %>%
-  group_by(YEAR, MECS_FT) %>%
+  group_by(YEAR, `Fuel type`) %>%
   summarize(CO2kg = sum(CO2kg, na.rm = TRUE),
             CH4kg = sum(CH4kg, na.rm = TRUE),
             N2Okg = sum(N2Okg, na.rm = TRUE),
             CO2e100kg = sum(CO2e100kg, na.rm = TRUE)) %>%
   ungroup() %>%
-  mutate(Year = YEAR, `Fuel Type` = MECS_FT) %>%
-  select(-YEAR, -MECS_FT) %>%
+  mutate(Year = YEAR, `Fuel Type` = `Fuel type`) %>%
+  select(-YEAR, -`Fuel type`) %>%
   select(`Fuel Type`, Year, everything())
 
 # Make a version of the table that includes Net electricity, to render later
@@ -343,6 +343,7 @@ GHGfactors_tbl <- GHGfactors %>%
 # Reorganize for GHGsByCountyYearplot.R and following
 
 countiesGHGtotals <- GHGemissionsPerCountyFuelYear1dig %>%
+  filter(YEAR == max(YEAR)) %>%
   group_by(County) %>%
   summarize(CO2e100tonnes = sum(CO2e100kg, na.rm = TRUE) / 1000) %>% 
   arrange(CO2e100tonnes) 
@@ -365,9 +366,22 @@ countiesGHGsummary$County <- factor(countiesGHGsummary$County,
 countiesGHGsummaryWider <- ungroup(countiesGHGsummary) %>%
   arrange(Year) %>%
   pivot_wider(names_from = Year, values_from = CO2e100tonnes) %>%
-  bind_rows(summarise_all(., ~(if(is.numeric(.)) sum(.) else "Totals"))) %>%
-  mutate(sum = rowSums(select(., starts_with("20")))) %>%
-  arrange(sum) %>%
+  mutate(sum = rowSums(select(., starts_with("20")))) 
+
+if (Region == "New York State") {
+  countiesGHGsummaryWider <- countiesGHGsummaryWider %>%
+    arrange(as.character(County))
+} else {
+  countiesGHGsummaryWider <- countiesGHGsummaryWider %>%
+    arrange(sum)
+}
+
+countiesGHGsummaryWider <- countiesGHGsummaryWider %>%
+  bind_rows(summarise_all(., ~(if(is.numeric(.)) {
+    sum(.) 
+    } else { 
+      if (Region == "New York State") { "State" } else { "Region"}
+    }))) %>%
   select(-sum)
 
 # Now compute GHGs by county per capita, for GHGsByCountyPerCapitaplot.R and following
@@ -380,17 +394,84 @@ for(col in names(GHGsbyCountyPerCapita)) {
       mutate(!!as.symbol(col) := 
                mapply(function(name, tonnes) 
                { tonnes / 
-                   ifelse(name == "Totals", 
+                   ifelse(name %in% c("Region", "State"),
                           RegionPopulation[[col]],
                           dfLookup(NYS_population_by_county, "County", name, col)) },
                County, !!as.symbol(col)))
   }
 }
 
+cLatestYear <- as.character(latestYear)
+
 GHGsbyCountyPerCapita <- 
   bind_rows(GHGsbyCountyPerCapita %>% 
-              filter(County != "Totals") %>%
-              arrange(desc(!!sym(as.character(latestYear)))),
+              filter(!(County %in% c("Region", "State"))) %>%
+              # This is the correct place to arrange rows as we want them; 
+              # alphabetically for New York State, and in descending order of 
+              # latest year's per capita emissions otherwise
+              # arrange(ifelse(Region == "New York State", County, 
+              #                desc(!!sym(as.character(latestYear))))),
+              rowwise() %>%
+              mutate(sortOrder = ifelse(Region == "New York State", County, 
+                                        desc(sapply(!!sym(cLatestYear), function(x) { x })))) %>%
+              ungroup() %>%
+              arrange(sortOrder),
             GHGsbyCountyPerCapita %>% 
-              filter(County == "Totals"))
+              filter(County %in% c("Region", "State"))) %>%
+  select(-sortOrder)
 
+GHGemissionsPerFuelLY <- GHGemissionsPerCountyFuelYear4dig %>%
+  filter(YEAR == max(YEAR)) %>%
+  group_by(`Fuel type`) %>%
+  summarize(CO2e100mt = sum(CO2e100kg) / 1000,
+            .groups = "drop") %>%
+  ungroup() %>%
+  arrange(desc(CO2e100mt))
+
+FuelsInDescendingOrderOfEmissions <- GHGemissionsPerFuelLY$`Fuel type` 
+# %>%
+#   str_replace_all(c("_" =  " ", "LPG NGL" = "LPG-NGL")) 
+
+# GHGemissionsPerCountyFuelYear4dig <- 
+#   GHGemissionsPerCountyFuelYear4dig %>% 
+#   mutate(across(`Fuel type`, ~str_replace_all(., c("_" =  " ", "LPG NGL" = "LPG-NGL"))))
+
+GHGemissionsPerCountyFuelYearWider4dig <- GHGemissionsPerCountyFuelYear4dig %>%
+  pivot_wider(id_cols = c(YEAR, County, NAICS4dig, NAICSname4dig),
+              names_from = `Fuel type`,
+              values_from = CO2e100kg,
+              values_fill = 0) %>%
+  select(YEAR, County, NAICS4dig, NAICSname4dig, all_of(FuelsInDescendingOrderOfEmissions))
+
+# GHGemissionsPerCountyFuelYear3dig <- 
+#   GHGemissionsPerCountyFuelYear3dig %>% 
+#   mutate(across(`Fuel type`, ~str_replace_all(., c("_" =  " ", "LPG NGL" = "LPG-NGL"))))
+
+GHGemissionsPerCountyFuelYearWider3dig <- GHGemissionsPerCountyFuelYear3dig %>%
+  pivot_wider(id_cols = c(YEAR, County, NAICS3dig, NAICSname3dig),
+              names_from = `Fuel type`,
+              values_from = CO2e100kg,
+              values_fill = 0) %>%
+  select(YEAR, County, NAICS3dig, NAICSname3dig, all_of(FuelsInDescendingOrderOfEmissions))
+# 
+# GHGemissionsPerCountyFuelYear2dig <- 
+#   GHGemissionsPerCountyFuelYear2dig %>% 
+#   mutate(across(`Fuel type`, ~str_replace_all(., c("_" =  " ", "LPG NGL" = "LPG-NGL"))))
+
+GHGemissionsPerCountyFuelYearWider2dig <- GHGemissionsPerCountyFuelYear2dig %>%
+  pivot_wider(id_cols = c(YEAR, County, NAICS2dig, NAICSname2dig),
+              names_from = `Fuel type`,
+              values_from = CO2e100kg,
+              values_fill = 0) %>%
+  select(YEAR, County, NAICS2dig, NAICSname2dig, all_of(FuelsInDescendingOrderOfEmissions))
+
+# GHGemissionsPerCountyFuelYear1dig <- 
+#   GHGemissionsPerCountyFuelYear1dig %>% 
+#   mutate(across(`Fuel type`, ~str_replace_all(., c("_" =  " ", "LPG NGL" = "LPG-NGL"))))
+
+GHGemissionsPerCountyFuelYearWider1dig <- GHGemissionsPerCountyFuelYear1dig %>%
+  pivot_wider(id_cols = c(YEAR, County, NAICS1dig, NAICSname1dig),
+              names_from = `Fuel type`,
+              values_from = CO2e100kg,
+              values_fill = 0) %>%
+  select(YEAR, County, NAICS1dig, NAICSname1dig, all_of(FuelsInDescendingOrderOfEmissions))

@@ -43,15 +43,6 @@ GHGemissionsSectorSummary <- GHGemissionsPerCountyFuelYear2dig %>%
   left_join(tibble(NAICS2dig = c(11, 21, 23, 31, 32, 33),
                    Sector = c("Agriculture", "Mining", "Construction", 
                               rep.int("Manufacturing", 3))), by = "NAICS2dig") %>%
-  # mutate(Sector = map_chr(NAICS2dig,    # not lapply() because we want a character vector, 
-  #                        function(x)    # not a list
-  #                          switch(as.character(x),
-  #                                 "11" = "Agriculture",
-  #                                 "21" = "Mining",
-  #                                 "23" = "Construction",
-  #                                 "31" = "Manufacturing",
-  #                                 "32" = "Manufacturing",
-  #                                 "33" = "Manufacturing"))) %>%
   mutate(Year = YEAR) %>% 
   select(Sector, Year, County, CO2e100kg, -YEAR) %>% 
   group_by(Sector, Year, County) %>%
@@ -116,7 +107,7 @@ GHGemissionsMfgDetailHighest <-
   slice(GHGemissionsManufacturingDetail, 
         1:(min(14 + ifelse(numberOfCounties < 4, 6,
                            ifelse(numberOfCounties < 10, 2, 0)), 
-               nrow(filter(GHGemissionsManufacturingDetail, CO2eCumFract < 0.85))) + 1))
+               nrow(filter(GHGemissionsManufacturingDetail, CO2eCumFract < 0.84))) + 1))
 
 MfgRemaining <- list("NAICS4dig" = 0, 
                      "NAICSname4dig" = "Remaining manufacturing categories",

@@ -1,5 +1,5 @@
 ---
-title: 'Energy use and resulting greenhouse gas emissions from industry and agriculture in the `r params$region` Region'
+title: 'Energy use and resulting greenhouse gas emissions from industry and agriculture in `r if (params$region == "New York State") { "New York State" } else { paste0("the ", params$region, " region") }` '
 author: 
 - name: 'Eric Koski'
 - affiliation: "Climate Solutions Accelerator of the Genesee-Finger Lakes Region; Orebed Analytics LLC"
@@ -474,7 +474,40 @@ Source: [@u.s.environmentalprotectionagencyEmissionFactorsGreenhouse2018]. The E
 ```{r GHGcountySectorLYFueltab, file="GHGcountySectorLYFueltab.R", out.extra=""}
 ```
 
+```{r writeTotals}
+# These full and summary datasets are useful to look at with other tools, so save them now. 
+# Note that .rds files are already compressed, sparing us the need to do it. 
+if (!dir_exists(str_c("./", Region))) {
+  dir_create(str_c("./", Region))
+}
+write_tsv(RegionEnergyPerFuelYear_1dig, str_c("./", Region, "/RegionEnergyPerFuelYear_1dig.csv"))
+write_tsv(RegionEnergyPerFuelYear_2dig, str_c("./", Region, "/RegionEnergyPerFuelYear_2dig.csv"))
+write_tsv(RegionEnergyPerFuelYear_3dig, str_c("./", Region, "/RegionEnergyPerFuelYear_3dig.csv.gz"))
+write_tsv(RegionEnergyPerFuelYear_4dig, str_c("./", Region, "/RegionEnergyPerFuelYear_4dig.csv.gz"))
+saveRDS(RegionEnergyPerFuelYear_1dig, str_c("./", Region, "/RegionEnergyPerFuelYear_1dig.rds"))
+saveRDS(RegionEnergyPerFuelYear_2dig, str_c("./", Region, "/RegionEnergyPerFuelYear_2dig.rds"))
+saveRDS(RegionEnergyPerFuelYear_3dig, str_c("./", Region, "/RegionEnergyPerFuelYear_3dig.rds"))
+saveRDS(RegionEnergyPerFuelYear_4dig, str_c("./", Region, "/RegionEnergyPerFuelYear_4dig.rds"))
 
+write_tsv(GHGemissionsPerCountyFuelYear1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear1dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYear2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear2dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYear3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear3dig.csv.gz"))
+write_tsv(GHGemissionsPerCountyFuelYear4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear4dig.csv.gz"))
+saveRDS(GHGemissionsPerCountyFuelYear1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear1dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYear2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear2dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYear3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear3dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYear4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear4dig.rds"))
+
+write_tsv(GHGemissionsPerCountyFuelYearWider1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider1dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYearWider2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider2dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYearWider3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider3dig.csv.gz"))
+write_tsv(GHGemissionsPerCountyFuelYearWider4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider4dig.csv.gz"))
+saveRDS(GHGemissionsPerCountyFuelYearWider1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider1dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider2dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider3dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider4dig.rds"))
+
+```
 
 \appendicesendhere
 

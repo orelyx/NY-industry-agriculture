@@ -11,28 +11,28 @@
 # library(purrr)
 # library(rlang)
 
-GHGsbyCountyPerCapita <- countiesGHGsummaryWider 
-
-for(col in names(GHGsbyCountyPerCapita)) {
-  if (!is.na(suppressWarnings(as.integer(col)))) {
-  GHGsbyCountyPerCapita <- GHGsbyCountyPerCapita %>%
-    mutate(!!as.symbol(col) := 
-      mapply(function(name, tonnes) 
-        { tonnes / 
-          ifelse(name == "Totals", 
-                 RegionPopulation[[col]],
-                 dfLookup(NYS_population_by_county, "County", name, col)) },
-        County, !!as.symbol(col)))
-  }
-}
-
-GHGsbyCountyPerCapita <- 
-  bind_rows(GHGsbyCountyPerCapita %>% 
-              filter(County != "Totals") %>%
-              # arrange(desc(`2016`)),
-              arrange(desc(!!sym(as.character(latestYear)))),
-            GHGsbyCountyPerCapita %>% 
-              filter(County == "Totals"))
+# GHGsbyCountyPerCapita <- countiesGHGsummaryWider 
+# 
+# for(col in names(GHGsbyCountyPerCapita)) {
+#   if (!is.na(suppressWarnings(as.integer(col)))) {
+#   GHGsbyCountyPerCapita <- GHGsbyCountyPerCapita %>%
+#     mutate(!!as.symbol(col) := 
+#       mapply(function(name, tonnes) 
+#         { tonnes / 
+#           ifelse(name == "Totals", 
+#                  RegionPopulation[[col]],
+#                  dfLookup(NYS_population_by_county, "County", name, col)) },
+#         County, !!as.symbol(col)))
+#   }
+# }
+# 
+# GHGsbyCountyPerCapita <- 
+#   bind_rows(GHGsbyCountyPerCapita %>% 
+#               filter(County != "Totals") %>%
+#               # arrange(desc(`2016`)),
+#               arrange(desc(!!sym(as.character(latestYear)))),
+#             GHGsbyCountyPerCapita %>% 
+#               filter(County == "Totals"))
 
 GHGcounties_pc <- GHGsbyCountyPerCapita$County
 

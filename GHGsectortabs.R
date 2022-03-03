@@ -40,7 +40,10 @@ if (Region == "New York State") {
     GHGsectorCountyLY %>%
       kable(escape = FALSE, digits = 0, booktabs = TRUE, longtable = TRUE,
           align = c("lrrrrr"),
-          linesep = c(rep.int(c(rep.int("", 4), "\\addlinespace"), (numberOfCounties - 1) %/% 5), "\\midrule"),
+          linesep = 
+            c(rep.int(c(rep.int("", 4), "\\addlinespace"), (numberOfCounties) %/% 5), 
+              rep.int("", (numberOfCounties - 1) %% 5), 
+              "\\midrule"),
           caption = 
             tableCaption(str_c(as.character(latestYear), " CO$_2$-equivalent GHG emissions per sector and county, metric tons CO$_2$"))) %>%
     kable_styling(latex_options = c("hold_position", "repeat_header"),

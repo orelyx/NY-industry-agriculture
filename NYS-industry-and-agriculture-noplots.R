@@ -1,3 +1,4 @@
+##################################################################################
 # title: "NYS-industry-and-agriculture-noplots.R"
 # author: "Eric Koski"
 # date: "2/16/2022"
@@ -7,7 +8,7 @@
 # interactively, in which case it simply generates the output datasets for New 
 # York State as a whole. 
 #
-#     Copyright (c) 2021 Orebed Analytics LLC under MIT License; see LICENSE.md. 
+#     Copyright (c) 2021, 2022 by Orebed Analytics LLC under MIT License; see LICENSE.md. 
 # 
 #     Data files produced by this software are licensed under a Creative Commons 
 #     Attribution 4.0 International License; see
@@ -195,5 +196,14 @@ saveRDS(GHGemissionsPerCountyFuelYear1dig, str_c("./", Region, "/GHGemissionsPer
 saveRDS(GHGemissionsPerCountyFuelYear2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear2dig.rds"))
 saveRDS(GHGemissionsPerCountyFuelYear3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear3dig.rds"))
 saveRDS(GHGemissionsPerCountyFuelYear4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYear4dig.rds"))
+
+write_tsv(GHGemissionsPerCountyFuelYearWider1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider1dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYearWider2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider2dig.csv"))
+write_tsv(GHGemissionsPerCountyFuelYearWider3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider3dig.csv.gz"))
+write_tsv(GHGemissionsPerCountyFuelYearWider4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider4dig.csv.gz"))
+saveRDS(GHGemissionsPerCountyFuelYearWider1dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider1dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider2dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider2dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider3dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider3dig.rds"))
+saveRDS(GHGemissionsPerCountyFuelYearWider4dig, str_c("./", Region, "/GHGemissionsPerCountyFuelYearWider4dig.rds"))
 
 
