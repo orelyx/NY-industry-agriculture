@@ -10,7 +10,8 @@ The code in this repository can be used to do either of two things:
 economic development regions. To do this, open the file `Generic-report-industry-and-agriculture.Rmd` in Rstudio and 
 select "Knit with parameters" from the "knit" pull-down menu. In the window that opens, select either "New York State" 
 for a report of the entire state's industrial and agricultural energy use and emissions, or the name of an economic 
-development region (such as "Long Island" or "North Country") for a report of its energy use and emissions. 
+development region (such as "Long Island" or "North Country") for a report of its energy use and emissions. To add or modify 
+the text of the report for greater relevance to a specific region, just rename the `.Rmd` file and modify the text as desired. 
 
 2. Generate dataset files facilitating further analysis. The code that knits the report (in #1) at the same time generates a collection 
 of dataset files containing the energy use and emissions data, in RDS and csv formats (sometimes compressed). 
@@ -22,7 +23,7 @@ which generates only the dataset files (and runs the fastest).
 installs the R packages required to knit the document or create the dataset files. Each of the reports in #1 contains 
 and extensive list of references providing background information about emissions inventories and data sources. 
 
-We are pleased to acknowledge the diligent and insightful work at the National Renewable Energy Laboratories that 
+We gratefully acknowledge the diligent and insightful work at the National Renewable Energy Laboratories that 
 produced the Industrial Energy Data Book on which the capabilities provided by code in this repository are based. 
 See McMillan, Colin and Vinayak Narwade. 2018. *The Industry Energy Tool (IET):
 Documentation*. Golden, CO: National Renewable Energy Laboratory.
