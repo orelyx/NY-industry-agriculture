@@ -13,9 +13,22 @@
 energyUseSummaryWider <- pivot_wider(ungroup(energyUseSummary),
                                      names_from = Year, 
                                      values_from = MMBTU) %>%
-  bind_rows(summarise_all(., ~(if(is.numeric(.)) sum(.) else "Totals"))) %>%
-  mutate(sum = rowSums(select(., starts_with("20")))) %>%
-  arrange(ifelse(Region == "New York State", desc(sum), sum)) %>%
+  mutate(sum = rowSums(select(., starts_with("20")))) 
+
+if (Region == "New York State") {
+  energyUseSummaryWider <- energyUseSummaryWider %>%
+    arrange(as.character(County))
+} else {
+  energyUseSummaryWider <- energyUseSummaryWider %>%
+    arrange(sum)
+}
+
+energyUseSummaryWider <- energyUseSummaryWider %>%
+  bind_rows(summarise_all(., ~(if(is.numeric(.)) {
+    sum(.) 
+  } else { 
+    if (Region == "New York State") { "State" } else { "Region"}
+  }))) %>%
   select(-sum)
 
 # Convert numeric values to character, so we can use "," as a thousands separator. 
@@ -34,7 +47,9 @@ if (outputFormat == "pdf_document") {
           align = c("l", rep.int("r", (latestYear - earliestYear) + 1)),
           linesep = 
             if(Region == "New York State") {
-              c(rep.int(c(rep.int("", 4), "\\addlinespace"), (numberOfCounties - 1) %/% 5), "\\midrule")
+              c(rep.int(c(rep.int("", 4), "\\addlinespace"), (numberOfCounties) %/% 5), 
+                rep.int("", (numberOfCounties - 1) %% 5), 
+                "\\midrule")
             } else {
               c(rep.int("", numberOfCounties - 1), "\\midrule")
             },

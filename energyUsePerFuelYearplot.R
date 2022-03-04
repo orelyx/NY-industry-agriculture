@@ -59,7 +59,7 @@ energyPerYearFuelPlot <- ggplot(RegionEnergyPerYearFuelBounds) +
                                "#ffe119", "#e6beff"),
                     name = "Fuel type", 
                     # ... and order the legend keys the way we want them!
-                    breaks = rev(str_replace_all(fuelNames, "_", " ")),
+                    breaks = rev(fuelNames),
                     guide = guide_legend(override.aes = list(alpha = 0.6))) +
   scale_y_continuous(labels = scientific_10) +
   scale_x_continuous(breaks = seq(min(RegionEnergyPerYearFuel$YEAR),

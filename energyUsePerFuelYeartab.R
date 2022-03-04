@@ -21,10 +21,10 @@ earliestRow <- filter(RegionEnergyPerYearFueltab, Year == min(Year))
 latestRow <- filter(RegionEnergyPerYearFueltab, Year == max(Year))
 
 firstNaturalGasPct <- 
-  formatC(round(100 * (earliestRow$Natural_gas / earliestRow$`Annual totals`)),
+  formatC(round(100 * (earliestRow$`Natural gas` / earliestRow$`Annual totals`)),
           format = "d")
 lastNaturalGasPct <- 
-  formatC(round(100 * (latestRow$Natural_gas / latestRow$`Annual totals`)),
+  formatC(round(100 * (latestRow$`Natural gas` / latestRow$`Annual totals`)),
           format = "d")
 
 RegionEnergyPerYearFueltab <- RegionEnergyPerYearFueltab %>%

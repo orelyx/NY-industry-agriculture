@@ -14,14 +14,7 @@
 RegionEnergyPerMfgSector3dYearFuel <- RegionEnergyPerFuelYear_3dig %>% 
   filter((NAICS3dig > 299) & (NAICS3dig < 400)) %>%
   group_by(YEAR, NAICS3dig, NAICSname3dig) %>% 
-  summarize(Diesel = sum(Diesel, na.rm = TRUE), 
-            LPG_NGL = sum(LPG_NGL, na.rm = TRUE), 
-            Net_electricity = sum(Net_electricity, na.rm = TRUE), 
-            Coal = sum(Coal, na.rm = TRUE), 
-            Natural_gas = sum(Natural_gas, na.rm = TRUE), 
-            Coke_and_breeze = sum(Coke_and_breeze, na.rm = TRUE), 
-            Residual_fuel_oil = sum(Residual_fuel_oil, na.rm = TRUE), 
-            Other = sum(Other, na.rm = TRUE),
+  summarize(across(all_of(fuelNames), ~sum(., na.rm = TRUE)), 
             .groups = "drop") 
 
 # Make our own copy of RegionEnergyPerMfgSector3dYearFuel with columns added 
@@ -83,7 +76,7 @@ regionsMfg3dAreaPlot1 <- ggplot(RegionEnergyPerMfgSector3dYearFuelBounds1) +
                                "#ffe119", "#e6beff"),
                     name = "Fuel type", 
                     # ... and order the legend keys the way we want them!
-                    breaks = rev(str_replace_all(fuelNames, "_", " "))) + 
+                    breaks = rev(fuelNames)) + 
   scale_y_continuous(labels = scientific_10) 
 
 for (fuel in fuelNames) {
@@ -91,7 +84,7 @@ for (fuel in fuelNames) {
                 geom_ribbon(aes(YEAR, 
                     ymin = !!as.symbol(str_c(fuel, "Lower")), 
                     ymax = !!as.symbol(str_c(fuel, "Upper")), 
-                    fill = !!quo_name(str_replace_all(fuel, "_", " "))), alpha = 0.6)
+                    fill = !!quo_name(fuel)), alpha = 0.6)
 }
 
 show(regionsMfg3dAreaPlot1)
